@@ -26,7 +26,7 @@ class ProblemPage(PageObject):
         """
         Return the text of the question of the problem.
         """
-        return self.q(css="div.problem p").text
+        return self.q(css="div.problem div.capa_inputtype label").text
 
     def fill_answer(self, text):
         """
@@ -38,7 +38,7 @@ class ProblemPage(PageObject):
         """
         Click the Check button!
         """
-        self.q(css='div.problem input.check').click()
+        self.q(css='div.problem button.check').click()
         self.wait_for_ajax()
 
     def is_correct(self):

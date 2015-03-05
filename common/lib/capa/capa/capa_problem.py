@@ -762,8 +762,14 @@ class LoncapaProblem(object):
         tree = etree.Element(problemtree.tag)
         for item in problemtree:
             item_xhtml = self._extract_html(item)
+            item_sibling = self.get_sibling(problemtree, item)
+            item_child = self.get_child(item)
             if item_xhtml is not None:
-                tree.append(item_xhtml)
+                if item_child is not None and item_child in self.responders:
+                    item_xhtml.text = ""
+                if item_sibling is None or item_sibling not in self.responders or item_xhtml.tag != 'p':
+                    # don't add item if it is question paragraph, will be added through label
+                    tree.append(item_xhtml)
 
         if tree.tag in html_transforms:
             tree.tag = html_transforms[problemtree.tag]['tag']
@@ -834,3 +840,28 @@ class LoncapaProblem(object):
         for solution in tree.findall('.//solution'):
             solution.attrib['id'] = "%s_solution_%i" % (self.problem_id, solution_id)
             solution_id += 1
+
+    def get_sibling(self, tree, node):
+        """
+        Check if node exist in problem tree and return next sibling if exist
+        else return None
+        """
+        problem_tree = tree.xpath('//problem/*')
+        if node in problem_tree:
+            node_index = problem_tree.index(node)
+            try:
+                return problem_tree[node_index+1]
+            except IndexError:
+                return None
+        else:
+            return None
+
+    def get_child(self, tree):
+        """
+        Get 1st child of the tree if there are any children
+        """
+        problem_tree = tree.xpath('./*')
+        if problem_tree:
+            return problem_tree[0]
+        else:
+            return None
