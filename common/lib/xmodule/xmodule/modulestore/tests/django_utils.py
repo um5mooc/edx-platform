@@ -4,7 +4,6 @@ Modulestore configuration for test cases.
 """
 import datetime
 import pytz
-from tempfile import mkdtemp
 from uuid import uuid4
 
 from mock import patch
@@ -235,7 +234,7 @@ class ModuleStoreTestCase(TestCase):
           your `setUp()` method.
     """
 
-    MODULESTORE = mixed_store_config(mkdtemp(), {}, include_xml=False)
+    MODULESTORE = mixed_store_config(mkdtemp_clean(), {}, include_xml=False)
 
     def setUp(self, **kwargs):
         """
