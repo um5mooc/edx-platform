@@ -201,6 +201,7 @@ class DraftVersioningModuleStore(SplitMongoModuleStore, ModuleStoreDraftAndPubli
                     ]
                 )
 
+            self._flag_publish_event(location.course_key, location)
             for branch in branches_to_delete:
                 branched_location = location.for_branch(branch)
                 parent_loc = self.get_parent_location(branched_location)
@@ -208,10 +209,6 @@ class DraftVersioningModuleStore(SplitMongoModuleStore, ModuleStoreDraftAndPubli
                 # publish parent w/o child if deleted element is direct only (not based on type of parent)
                 if branch == ModuleStoreEnum.BranchName.draft and branched_location.block_type in DIRECT_ONLY_CATEGORIES:
                     self.publish(parent_loc.version_agnostic(), user_id, blacklist=EXCLUDE_ALL, **kwargs)
-
-        # Remove this location from the courseware search index so that searches
-        # will refrain from showing it as a result
-        CoursewareSearchIndexer.add_to_search_index(self, location, delete=True)
 
     def _map_revision_to_branch(self, key, revision=None):
         """

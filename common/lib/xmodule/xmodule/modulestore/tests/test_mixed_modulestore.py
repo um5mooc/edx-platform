@@ -276,8 +276,7 @@ class TestMixedModuleStore(CourseComparisonTest):
         }
 
         mongo_course_key = self.course_locations[self.MONGO_COURSEID].course_key
-        self.fake_location = self.store.make_course_key(
-            mongo_course_key.org, mongo_course_key.course, mongo_course_key.run).make_usage_key('vertical', 'fake')
+        self.fake_location = self.store.make_course_key(mongo_course_key.org, mongo_course_key.course, mongo_course_key.run).make_usage_key('vertical', 'fake')
 
         self.xml_chapter_location = self.course_locations[self.XML_COURSEID1].replace(
             category='chapter', name='Overview'
@@ -315,11 +314,9 @@ class TestMixedModuleStore(CourseComparisonTest):
         self.store.mappings = {}
         course_key = self.course_locations[self.MONGO_COURSEID].course_key
         with check_exact_number_of_calls(self.store.default_modulestore, 'has_course', 1):
-            self.assertEqual(self.store.default_modulestore, self.store._get_modulestore_for_courselike(
-                course_key))  # pylint: disable=protected-access
+            self.assertEqual(self.store.default_modulestore, self.store._get_modulestore_for_courselike(course_key))  # pylint: disable=protected-access
             self.assertIn(course_key, self.store.mappings)
-            self.assertEqual(self.store.default_modulestore, self.store._get_modulestore_for_courselike(
-                course_key))  # pylint: disable=protected-access
+            self.assertEqual(self.store.default_modulestore, self.store._get_modulestore_for_courselike(course_key))  # pylint: disable=protected-access
 
     @ddt.data(*itertools.product(
         (ModuleStoreEnum.Type.mongo, ModuleStoreEnum.Type.split),
@@ -1486,8 +1483,7 @@ class TestMixedModuleStore(CourseComparisonTest):
         self._create_block_hierarchy()
 
         # start off as Private
-        item = self.store.create_child(
-            self.user_id, self.writable_chapter_location, 'problem', 'test_compute_publish_state')
+        item = self.store.create_child(self.user_id, self.writable_chapter_location, 'problem', 'test_compute_publish_state')
         item_location = item.location
         with check_mongo_calls(max_find, max_send):
             self.assertFalse(self.store.has_published_version(item))
