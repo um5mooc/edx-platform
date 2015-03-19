@@ -19,16 +19,18 @@ from mock import Mock, patch
 
 from . import LogicTest
 from lxml import etree
+from django.conf import settings
+
 from opaque_keys.edx.locations import SlashSeparatedCourseKey
 from xmodule.video_module import VideoDescriptor, create_youtube_string, get_video_from_cdn
 from .test_import import DummySystem
 from xblock.field_data import DictFieldData
 from xblock.fields import ScopeIds
+from edxval.api import create_video, create_profile, get_video_info
 
 from xmodule.tests import get_test_descriptor_system
 from xmodule.video_module.transcripts_utils import download_youtube_subs, save_to_store
 
-from django.conf import settings
 
 SRT_FILEDATA = '''
 0
@@ -522,6 +524,32 @@ class VideoDescriptorImportTestCase(unittest.TestCase):
             'data': ''
         })
 
+    def test_import_edx_val_data(self):
+        # setup
+        module_system = DummySystem(load_error_modules=True)
+        for profile, extension in [("mobile_low", "mp4"), ("mobile_high", "mp4")]:
+            create_profile({'profile_name': profile, 'extension': extension, 'width': 200, 'height': 2001})
+        id_generator = Mock()
+        id_generator.course_id = "test_course_id"
+
+        # import new edx_video_id
+        xml_data = """
+            <video edx_video_id="test_edx_video_id">
+               <edx_val_data>
+                <edx_video client_video_id="test_client_video_id" duration="128.0" status="test_status">
+                <encoded_videos>
+                  <encoded_video bitrate="100" file_size="1600" profile="mobile_low" url="profile1_url"/>
+                  <encoded_video bitrate="1000" file_size="16000" profile="mobile_high" url="profile2_url"/>
+                </encoded_videos>
+                </edx_video>
+               </edx_val_data>
+            </video>
+        """
+        video = VideoDescriptor.from_xml(xml_data, module_system, id_generator)
+        self.assert_attributes_equal(video, {'edx_video_id': 'test_edx_video_id'})
+        val_video_info = get_video_info('test_edx_video_id')
+        # TODO verify returned video info
+
 
 class VideoExportTestCase(VideoDescriptorTestBase):
     """
@@ -550,6 +578,30 @@ class VideoExportTestCase(VideoDescriptorTestBase):
         self.descriptor.html5_sources = ['http://www.example.com/source.mp4', 'http://www.example.com/source.ogg']
         self.descriptor.download_video = True
         self.descriptor.transcripts = {'ua': 'ukrainian_translation.srt', 'ge': 'german_translation.srt'}
+        for profile, extension in [("mobile_low", "mp4"), ("mobile_high", "mp4")]:
+            create_profile({'profile_name': profile, 'extension': extension, 'width': 200, 'height': 2001})
+        self.descriptor.edx_video_id = create_video(
+            {
+                "edx_video_id": "test_edx_video_id",
+                "client_video_id": "test_client_video_id",
+                "duration": 128.0,
+                "status": "test_status",
+                "encoded_videos": [
+                    {
+                        "profile": "mobile_low",
+                        "url": "profile1_url",
+                        "file_size": 1600,
+                        "bitrate": 100,
+                    },
+                    {
+                        "profile": "mobile_high",
+                        "url": "profile2_url",
+                        "file_size": 16000,
+                        "bitrate": 1000,
+                    },
+                ],
+            },
+        )
 
         xml = self.descriptor.definition_to_xml(None)  # We don't use the `resource_fs` parameter
         parser = etree.XMLParser(remove_blank_text=True)
@@ -561,6 +613,14 @@ class VideoExportTestCase(VideoDescriptorTestBase):
            <handout src="http://www.example.com/handout"/>
            <transcript language="ge" src="german_translation.srt" />
            <transcript language="ua" src="ukrainian_translation.srt" />
+           <edx_val_data>
+            <edx_video client_video_id="test_client_video_id" duration="128.0" status="test_status">
+            <encoded_videos>
+              <encoded_video bitrate="100" file_size="1600" profile="mobile_low" url="profile1_url"/>
+              <encoded_video bitrate="1000" file_size="16000" profile="mobile_high" url="profile2_url"/>
+            </encoded_videos>
+            </edx_video>
+           </edx_val_data>
          </video>
         '''
         expected = etree.XML(xml_string, parser=parser)
