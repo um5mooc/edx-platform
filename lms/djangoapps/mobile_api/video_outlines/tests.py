@@ -9,6 +9,7 @@ from uuid import uuid4
 from collections import namedtuple
 
 from edxval import api
+from mobile_api.models import MobileApiConfig
 from xmodule.modulestore.tests.factories import ItemFactory
 from xmodule.video_module import transcripts_utils
 from xmodule.modulestore.django import modulestore
@@ -58,6 +59,7 @@ class TestVideoAPITestCase(MobileAPITestCase):
 
         self.edx_video_id = 'testing-123'
         self.video_url = 'http://val.edx.org/val/video.mp4'
+        self.video_url_high = 'http://val.edx.org/val/video_high.mp4'
         self.html5_video_url = 'http://video.edx.org/html5/video.mp4'
 
         api.create_profile({
@@ -65,6 +67,12 @@ class TestVideoAPITestCase(MobileAPITestCase):
             'extension': 'mp4',
             'width': 1280,
             'height': 720
+        })
+        api.create_profile({
+            'profile_name': 'mobile_high',
+            'extension': 'mp4',
+            'width': 750,
+            'height': 590
         })
         api.create_profile({
             'profile_name': 'mobile_low',
@@ -92,8 +100,18 @@ class TestVideoAPITestCase(MobileAPITestCase):
                     'url': self.video_url,
                     'file_size': 12345,
                     'bitrate': 250
-                }
+                },
+                {
+                    'profile': 'mobile_high',
+                    'url': self.video_url_high,
+                    'file_size': 99999,
+                    'bitrate': 250
+                },
+
             ]})
+
+        # Set requested profiles
+        MobileApiConfig(video_profiles="mobile_low,mobile_high,youtube").save()
 
 
 class TestVideoAPIMixin(object):
@@ -410,6 +428,92 @@ class TestVideoSummaryList(
     """
     REVERSE_INFO = {'name': 'video-summary-list', 'params': ['course_id']}
 
+    def test_mobile_api_config(self):
+        """
+        Tests VideoSummaryList with different MobileApiConfig video_profiles
+        """
+        self.login_and_enroll()
+        edx_video_id = "testing_mobile_high"
+        api.create_video({
+            'edx_video_id': edx_video_id,
+            'status': 'test',
+            'client_video_id': u"test video omega \u03a9",
+            'duration': 12,
+            'courses': [unicode(self.course.id)],
+            'encoded_videos': [
+                {
+                    'profile': 'youtube',
+                    'url': 'xyz123',
+                    'file_size': 2222,
+                    'bitrate': 4444
+                },
+                {
+                    'profile': 'mobile_high',
+                    'url': self.video_url_high,
+                    'file_size': 111,
+                    'bitrate': 333
+                },
+
+            ]})
+        ItemFactory.create(
+            parent=self.other_unit,
+            category="video",
+            display_name=u"testing mobile high video",
+            edx_video_id=edx_video_id,
+        )
+        course_outline = self.api_response().data
+
+        expected_output = {
+            'category': u'video',
+            'video_thumbnail_url': None,
+            'language': u'en',
+            'name': u'testing mobile high video',
+            'video_url': u'http://val.edx.org/val/video_high.mp4',
+            'duration': 12.0,
+            'transcripts': {
+                'en': 'http://testserver/api/mobile/v0.5/video_outlines/transcripts/{}/testing_mobile_high_video/en'.format(self.course.id)  # pylint: disable=line-too-long
+            },
+            'encoded_videos': {
+                u'mobile_high': {
+                    'url': u'http://val.edx.org/val/video_high.mp4',
+                    'file_size': 111
+                },
+                u'youtube': {
+                    'url': u'xyz123',
+                    'file_size': 2222
+                }
+            },
+            'size': 111
+        }
+        course_outline[0]['summary'].pop("id")
+        self.assertEqual(course_outline[0]['summary'], expected_output)
+
+        MobileApiConfig(video_profiles="mobile_low,youtube").save()
+
+        course_outline = self.api_response().data
+
+        expected_output = {
+            'category': u'video',
+            'video_thumbnail_url': None,
+            'language': u'en',
+            'name': u'testing mobile high video',
+            'video_url': u'xyz123',
+            'duration': 12.0,
+            'transcripts': {
+                'en': 'http://testserver/api/mobile/v0.5/video_outlines/transcripts/{}/testing_mobile_high_video/en'.format(self.course.id)  # pylint: disable=line-too-long
+            },
+            'encoded_videos': {
+                u'youtube': {
+                    'url': u'xyz123',
+                    'file_size': 2222
+                }
+            },
+            'size': 2222
+        }
+        course_outline[0]['summary'].pop("id")
+        self.assertEqual(course_outline[0]['summary'], expected_output)
+
+
     def test_course_list(self):
         self.login_and_enroll()
         self._create_video_with_subs()
@@ -446,7 +550,6 @@ class TestVideoSummaryList(
         self.assertEqual(course_outline[1]['summary']['size'], 0)
         self.assertEqual(course_outline[1]['path'][2]['name'], self.other_unit.display_name)
         self.assertEqual(course_outline[1]['path'][2]['id'], unicode(self.other_unit.location))
-
         self.assertEqual(course_outline[2]['summary']['video_url'], self.html5_video_url)
         self.assertEqual(course_outline[2]['summary']['size'], 0)
 
