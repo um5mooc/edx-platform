@@ -459,7 +459,26 @@ class CourseWikiTest(UniqueCourseTest):
         """
         Wiki page by default is editable for students
         """
-        self.course_wiki_page.edit_article("hello")
+        content = "hello"
+        self.course_wiki_page.edit_article(content)
+        actual_content = str(self.course_wiki_page.q(css='.wiki-article p').text[0])
+        self.assertEqual(content, actual_content)
+
+    def test_course_circuit_plugin(self):
+        """
+        Wiki page by default is editable for students
+        """
+        hi = "hi"
+        from nose.tools import set_trace
+        set_trace()
+        circuit_plugin_content = u"circuit-schematic:[['r',[128,48,0],{'r':'1','_json_':0},['2','1']],['view',0,0,2,null,null,null,null,null,null,null],['dc',{'0':0,'1':1,'I(_3)':-1}]]"
+        # circuit_plugin_content = """circuit-schematic:[["r",[128,48,0],{"r":"1","_json_":0},["2","1"]],["view",0,0,2,null,null,null,null,null,null,null],["dc",{"0":0,"1":1,"I(_3)":-1}]]"""
+        self.course_wiki_page.edit_article(circuit_plugin_content)
+        # actual_content = str(self.course_wiki_page.q(css='.wiki-article p').text[0])
+        # self.assertEqual(circuit_plugin_content, actual_content)
+        # from nose.tools import set_trace
+        # set_trace()
+        # self.assertEqual(1, 1)
 
 
 class HighLevelTabTest(UniqueCourseTest):
