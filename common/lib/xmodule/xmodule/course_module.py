@@ -835,6 +835,9 @@ class CourseFields(object):
 
 
 class CourseDescriptor(CourseFields, SequenceDescriptor, LicenseMixin):
+    """
+    The descriptor for the course XModule
+    """
     module_class = SequenceModule
 
     def __init__(self, *args, **kwargs):

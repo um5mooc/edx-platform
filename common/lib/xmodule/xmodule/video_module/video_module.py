@@ -287,7 +287,8 @@ class VideoModule(VideoFields, VideoTranscriptsMixin, VideoStudentViewHandlers, 
         })
 
 
-class VideoDescriptor(VideoFields, VideoTranscriptsMixin, VideoStudioViewHandlers, TabsEditingDescriptor, EmptyDataRawDescriptor, LicenseMixin):
+class VideoDescriptor(VideoFields, VideoTranscriptsMixin, VideoStudioViewHandlers,
+                      TabsEditingDescriptor, EmptyDataRawDescriptor, LicenseMixin):
     """
     Descriptor for `VideoModule`.
     """
