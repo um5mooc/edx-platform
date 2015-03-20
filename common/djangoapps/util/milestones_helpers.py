@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
+from courseware.entrance_exams import can_skip_entrance_exam
 from xmodule.modulestore.django import modulestore
 
 NAMESPACE_CHOICES = {
@@ -155,6 +156,41 @@ def fulfill_course_milestone(course_key, user):
     course_milestones = milestones_api.get_course_milestones(course_key=course_key, relationship="fulfills")
     for milestone in course_milestones:
         milestones_api.add_user_milestone({'id': user.id}, milestone)
+
+
+def get_required_content(course, user):
+    """
+    Queries milestones subsystem to see if the specified course is gated on one or more milestones,
+    and if those milestones can be fulfilled via completion of a particular course content module
+    """
+    required_content = []
+    if settings.FEATURES.get('MILESTONES_APP', False):
+        from milestones.exceptions import InvalidMilestoneRelationshipTypeException
+        # Get all of the outstanding milestones for this course, for this user
+        try:
+            milestone_paths = get_course_milestones_fulfillment_paths(
+                unicode(course.id),
+                serialize_user(user)
+            )
+        except InvalidMilestoneRelationshipTypeException:
+            return required_content
+
+        # For each outstanding milestone, see if this content is one of its fulfillment paths
+        for path_key in milestone_paths:
+            milestone_path = milestone_paths[path_key]
+            if milestone_path.get('content') and len(milestone_path['content']):
+                for content in milestone_path['content']:
+                    required_content.append(content)
+
+    # check if required_content has any entrance exam
+    # and user is allowed to skip it then remove it from required content
+    if required_content and getattr(course, 'entrance_exam_enabled', False) and \
+            can_skip_entrance_exam(user, course):
+        descriptors = [modulestore().get_item(UsageKey.from_string(content)) for content in required_content]
+        entrance_exam_contents = [unicode(descriptor.location)
+                                  for descriptor in descriptors if descriptor.is_entrance_exam]
+        required_content = list(set(required_content) - set(entrance_exam_contents))
+    return required_content
 
 
 def milestones_achieved_by_user(user, namespace):
