@@ -77,34 +77,52 @@ class CourseList(CourseViewMixin, ListAPIView):
     """
     **Use Case**
 
-        CourseList returns paginated list of courses in the edX Platform. The list can be filtered by course_id.
+        Get a paginated list of courses in the edX Platform. 
 
-    **Example Request**
+        The list can be filtered by course_id.
+
+        Each page in the list can contain up to 10 courses.
+
+    **Example Requests**
 
           GET /api/course_structure/v0/courses/
+
           GET /api/course_structure/v0/courses/?course_id={course_id1},{course_id2}
 
     **Response Values**
 
-        * id: The unique identifier for the course.
+        * count: The number of courses in the edX platform.
 
-        * name: The name of the course.
+        * next: The URI to the next page of courses.
 
-        * category: The type of content. In this case, the value is always "course".
+        * previous: The URI to the previous page of courses.
 
-        * org: The organization specified for the course.
+        * num_pages: The number of pages listing courses.
 
-        * course: The course number.
+        * results:  A list of courses returned. Each collection in the list
+          contains:
 
-        * org: The run for the course.
+            * id: The unique identifier for the course.
 
-        * uri: The URI to use to get details of the course.
+            * name: The name of the course.
 
-        * image_url: The URI for the course's main image.
+            * category: The type of content. In this case, the value is always
+              "course".
 
-        * start: Course start date
+            * org: The organization specified for the course.
 
-        * end: Course end date
+            * run: The run of the course.
+
+            * course: The course number.
+
+            * uri: The URI to use to get details of the course.
+
+            * image_url: The URI for the course's main image.
+
+            * start: The course start date.
+
+            * end: The course end date. If course end date is not specified, the
+              value is null.
     """
     paginate_by = 10
     paginate_by_param = 'page_size'

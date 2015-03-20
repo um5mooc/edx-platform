@@ -18,3 +18,4 @@ EdX Platform APIs
     mobile/index
     enrollment/index
     user/index
+    course_structure/index

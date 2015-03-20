@@ -164,7 +164,10 @@ MOCK_MODULES = [
     'student',
     'student.views',
     'student.forms',
-    'student.models'
+    'student.models',
+    'celery',
+    'celery.task',
+    'student.roles'
 ]
 
 for mod_name in MOCK_MODULES:
