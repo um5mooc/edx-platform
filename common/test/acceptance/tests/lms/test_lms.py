@@ -30,9 +30,11 @@ from ...pages.lms.problem import ProblemPage
 from ...pages.lms.video.video import VideoPage
 from ...pages.lms.courseware import CoursewarePage
 from ...pages.studio.settings import SettingsPage
+from ...pages.studio.utils import type_in_codemirror
 from ...pages.lms.login_and_register import CombinedLoginAndRegisterPage
 from ...pages.lms.track_selection import TrackSelectionPage
 from ...pages.lms.pay_and_verify import PaymentAndVerificationFlow, FakePaymentPage
+from ...pages.lms.wiki import CourseWikiPage
 from ...fixtures.course import CourseFixture, XBlockFixtureDesc, CourseUpdateDesc
 
 
@@ -423,6 +425,52 @@ class LanguageTest(WebAppTest):
         self.assertIn(self.current_courses_text, changed_text)
 
 
+class CourseWikiTest(UniqueCourseTest):
+    """
+    Tests that verify the course wiki.
+    """
+
+    def setUp(self):
+        """
+        Initialize pages and install a course fixture.
+        """
+        super(CourseWikiTest, self).setUp()
+
+        # self.course_info['number'] must be shorter since we are accessing the wiki. See TNL-1751
+        self.course_info['number'] = self.unique_id[0:6]
+
+        self.course_info_page = CourseInfoPage(self.browser, self.course_id)
+        self.course_wiki_page = CourseWikiPage(self.browser)
+        self.course_info_page = CourseInfoPage(self.browser, self.course_id)
+        self.tab_nav = TabNavPage(self.browser)
+
+        CourseFixture(
+            self.course_info['org'], self.course_info['number'],
+            self.course_info['run'], self.course_info['display_name']
+        ).install()
+
+        # Auto-auth register for the course
+        AutoAuthPage(self.browser, course_id=self.course_id).visit()
+
+        # Access course wiki page
+        self.course_info_page.visit()
+        self.tab_nav.go_to_tab('Wiki')
+
+    def test_edit_course_wiki(self):
+        """
+        Wiki page by default is editable for students
+        """
+        self.course_wiki_page.open_article_editor()
+        type_in_codemirror(self.course_wiki_page, 0, "hello")
+        self.course_wiki_page.q(css='button[name="save"]').click()
+        self.course_wiki_page.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
+
+        from nose.tools import set_trace
+        set_trace()
+        self.assertEqual(1, 1)
+
+
+
 class HighLevelTabTest(UniqueCourseTest):
     """
     Tests that verify each of the high-level tabs available within a course.
@@ -433,6 +481,9 @@ class HighLevelTabTest(UniqueCourseTest):
         Initialize pages and install a course fixture.
         """
         super(HighLevelTabTest, self).setUp()
+
+        # self.course_info['number'] must be shorter since we are accessing the wiki. See TNL-1751
+        self.course_info['number'] = self.unique_id[0:6]
 
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
         self.progress_page = ProgressPage(self.browser, self.course_id)
@@ -512,6 +563,25 @@ class HighLevelTabTest(UniqueCourseTest):
         self.course_info_page.visit()
         self.tab_nav.go_to_tab('Test Static Tab')
         self.assertTrue(self.tab_nav.is_on_tab('Test Static Tab'))
+
+    def test_wiki_tab_first_time(self):
+        """
+        Navigate to the course wiki tab. When the wiki is accessed for
+        the first time, it is created on the fly.
+        """
+
+        course_wiki = CourseWikiPage(self.browser)
+        # From the course info page, navigate to the wiki tab
+        self.course_info_page.visit()
+        self.tab_nav.go_to_tab('Wiki')
+        self.assertTrue(self.tab_nav.is_on_tab('Wiki'))
+
+        # Assert that a default wiki is created
+        expected_article_name = self.course_info['org'] + "." + \
+                                 self.course_info['number'] + "." + \
+                                 self.course_info['run']
+        self.assertEqual(expected_article_name, course_wiki.article_name)
+
 
     def test_courseware_nav(self):
         """
