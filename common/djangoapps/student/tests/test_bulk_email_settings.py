@@ -42,7 +42,7 @@ class TestStudentDashboardEmailView(ModuleStoreTestCase):
         self.email_modal_link = (
             '<a href="#email-settings-modal" class="action action-email-settings" rel="leanModal" '
             'data-course-id="{org}/{num}/{name}" data-course-number="{num}" '
-            'data-optout="False">Email Settings</a>'
+            'data-dashboard-index="0" data-optout="False">Email Settings</a>'
         ).format(
             org=self.course.org,
             num=self.course.number,
@@ -113,7 +113,7 @@ class TestStudentDashboardEmailViewXMLBacked(ModuleStoreTestCase):
         self.email_modal_link = (
             '<a href="#email-settings-modal" class="action action-email-settings" rel="leanModal" '
             'data-course-id="{org}/{num}/{name}" data-course-number="{num}" '
-            ' data-optout="False">Email Settings</a>'
+            'data-dashboard-index="0" data-optout="False">Email Settings</a>'
         ).format(
             org='edX',
             num='toy',
