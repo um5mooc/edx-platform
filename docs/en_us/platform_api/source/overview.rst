@@ -19,3 +19,4 @@ The edX Platform APIs currently include the following modules:
 * :ref:`edX Platform Mobile API Version 0.5`
 * :ref:`edX Platform Enrollment API Version 1.0`
 * :ref:`edX Platform User API Version 0`
+* :ref:`EdX Platform Course Structure API Version 0`
