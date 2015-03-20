@@ -248,6 +248,7 @@ define([
     "js/spec/views/xblock_editor_spec",
     "js/spec/views/xblock_string_field_editor_spec",
     "js/spec/views/xblock_validation_spec",
+    "js/spec/views/license_spec",
 
     "js/spec/views/utils/view_utils_spec",
 
