@@ -23,7 +23,7 @@ define(["backbone", "underscore"], function(Backbone, _) {
           options = this.get("options");
 
       if (_.isEmpty(options)) {
-        return type;
+        return type || "";
       }
 
       // options are where it gets tricky
