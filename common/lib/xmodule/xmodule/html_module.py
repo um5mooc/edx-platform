@@ -87,7 +87,7 @@ class HtmlModule(HtmlModuleMixin):
     pass
 
 
-class HtmlDescriptor(HtmlFields, XmlDescriptor, EditingDescriptor, LicenseMixin):
+class HtmlDescriptor(HtmlFields, XmlDescriptor, EditingDescriptor, LicenseMixin): # pylint: disable=abstract-method
     """
     Module for putting raw html in a course
     """
