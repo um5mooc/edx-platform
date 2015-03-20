@@ -4,35 +4,33 @@
 EdX Platform Course Structure API Overview
 ################################################
 
-Use the edX Platform Enrollment API to view user and course enrollment
-information, and to enroll a user in a course.
+Use the edX Platform Course Structure API to view course details, including the
+blocks in the course and the course grading policy.
 
-The edX Platform Enrollment API uses Representational State Transfer (REST)
-design principles and supports the JavaScript Object Notation (JSON) data-
-interchange format. The REST API is simple, lightweight, and optimized.
+The edX Platform Course Structure API uses Representational State Transfer
+(REST) design principles and supports the JavaScript Object Notation (JSON)
+data- interchange format. The REST API is simple, lightweight, and optimized.
 
-You can use the edX Platform Enrollment API for web, desktop, and mobile
+You can use the edX Platform Course Structure API for web, desktop, and mobile
 applications.
 
-****************************************
-EdX Platform Enrollment API Version 1.0
-****************************************
-
-The edX Platform Enrollment API is currently at version 1.0. We plan on making
-significant enhancements to this API.
-
 ********************************************
-EdX Platform Enrollment API Capabilities
+EdX Platform Course Structure API Version 0
 ********************************************
 
-With the edX Platform Enrollment API, you can:
+The edX Platform Course Structure API is currently at version 0. We plan on
+making significant enhancements to this API.
 
-* :ref:`Get the user's enrollment status in a course <Get the Users Enrollment
-  Status in a Course>`
+***********************************************
+EdX Platform Course Structure API Capabilities
+***********************************************
 
-* :ref:`Get enrollment details for a course<Get Enrollment Details for a
-  Course>`
+With the edX Platform Course Structure API, you can:
 
-* :ref:`View a user's enrollments <View and add to a Users Course Enrollments>`
+* :ref:`Get a list of courses in the edX platform <Get a List of Courses>`
 
-* :ref:`Enroll a user in a course <View and add to a Users Course Enrollments>`
+* :ref:`Get details about a course <Get Course Details>`
+
+* :ref:`Get a course's structure, or blocks <Get the Course Structure>`
+
+* :ref:`Get a courses grading policy <Get the Course Grading Policy>`

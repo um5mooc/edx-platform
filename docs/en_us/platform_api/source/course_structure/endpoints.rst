@@ -4,8 +4,7 @@
 EdX Platform Course Structure API Endpoints
 ################################################
 
-Use the edX Platform Enrollment API to view information about users and
-their course enrollments, course information, and videos and transcripts.
+Use the edX Platform Course Structure API to view information about courses.
 
 The following tasks and endpoints are currently supported. 
 
@@ -16,11 +15,12 @@ The following tasks and endpoints are currently supported.
 
    * - To:
      - Use this endpoint:
-   * - :ref:`Get the user's enrollment status in a course <Get the Users Enrollment Status in a Course>`
-     - /api/enrollment/v1/enrollment/{user_id},{course_id}
-   * - :ref:`Get enrollment details for a course<Get Enrollment Details for a Course>`
-     - /api/enrollment/v1/course/{course_id}
-   * - :ref:`View a user's enrollments <View and add to a Users Course Enrollments>`
-     - /api/enrollment/v1/enrollment
-   * - :ref:`Enroll a user in a course <View and add to a Users Course Enrollments>`
-     - /api/enrollment/v1/enrollment{“course_details”:{“course_id”:“*course_id*”}}
+   * - :ref:`Get a list of courses in the edX platform <Get a List of Courses>`
+     - GET /api/course_structure/v0/courses/
+   * - :ref:`Get details about a course <Get Course Details>`
+     - GET /api/course_structure/v0/courses/{course_id}/
+   * - :ref:`Get a course's structure, or blocks <Get the Course Structure>`
+     - GET /api/course_structure/v0/course_structures/{course_id}/
+   * - :ref:`Get a course's grading policy <Get the Course Grading Policy>`
+     - GET /api/course_structure/v0/grading_policies/{course_id}/
+       

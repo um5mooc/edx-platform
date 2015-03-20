@@ -1,7 +1,16 @@
-##############################
-Courses API Module
-##############################
+########################################
+EdX Platform Course Structure API Module
+########################################
 
+This page contains information on using the Platform Course Structure API to:
+
+* :ref:`Get a list of courses in the edX platform <Get a List of Courses>`
+
+* :ref:`Get details about a course <Get Course Details>`
+
+* :ref:`Get a course's structure, or blocks <Get the Course Structure>`
+
+* :ref:`Get a courses grading policy <Get the Course Grading Policy>`
 
 .. _Get a List of Courses:
 
@@ -48,5 +57,152 @@ Get a List of Courses
             . . .
         ]
     }
+.. _Get Course Details:
 
+**************************
+Get Course Details
+**************************
 
+.. autoclass:: course_structure_api.v0.views.CourseDetail
+
+**Example response**
+
+.. code-block:: json
+
+    HTTP 200 OK  
+    Vary: Accept   
+    Content-Type: text/html; charset=utf-8   
+    Allow: GET, HEAD, OPTIONS 
+ 
+    {
+        "id": "ANUx/ANU-INDIA1x/1T2014", 
+        "name": "Engaging India", 
+        "category": "course", 
+        "org": "ANUx", 
+        "run": "1T2014", 
+        "course": "ANU-INDIA1x", 
+        "uri": "https://courses.stage.edx.org/api/course_structure/v0/courses/ANUx/ANU-INDIA1x/1T2014/", 
+        "image_url": "/c4x/ANUx/ANU-INDIA1x/asset/homepage_course_image.jpg", 
+        "start": "2014-04-29T01:00:00Z", 
+        "end": "2014-07-21T01:00:00Z"
+    }
+
+.. _Get the Course Structure:
+
+**************************
+Get the Course Structure
+**************************
+
+.. autoclass:: course_structure_api.v0.views.CourseStructure
+
+**Example response**
+
+.. code-block:: json
+
+    {
+        "root": "i4x://ANUx/ANU-INDIA1x/course/1T2014", 
+        "blocks": {
+            "i4x://ANUx/ANU-INDIA1x/html/834f845ae8b944f1882f14ce6417c9d1": {
+            "id": "i4x://ANUx/ANU-
+                INDIA1x/html/834f845ae8b944f1882f14ce6417c9d1", 
+            "type": "html", 
+            "display_name": "", 
+            "graded": false, 
+            "format": null, 
+            "children": []
+        }, 
+        "i4x://ANUx/ANU-INDIA1x/html/c3493aaebaba4ab6a0499fbc27ac3b0e": {
+            "id": "i4x://ANUx/ANU-
+                INDIA1x/html/c3493aaebaba4ab6a0499fbc27ac3b0e", 
+            "type": "problem", 
+            "display_name": Check your learning - Part 1 / 
+              \u0939\u092e\u0928\u0947 \u0915\u094d\u092f\u093e 
+              \u0938\u0940\u0916\u093e - \u092d\u093e\u0917 6 ",  
+            "graded": true,  
+            "graded": false, 
+            "format": null, 
+            "children": []
+        }, 
+        "i4x://ANUx/ANU-INDIA1x/sequential/3731eee6a39c473c98ef6a5c3f56c04c": {
+            "id": "i4x://ANUx/ANU-
+                INDIA1x/sequential/3731eee6a39c473c98ef6a5c3f56c04c", 
+            "type": "sequential", 
+            "display_name": "Reflective project / 
+                \u091a\u093f\u0902\u0924\u0928\u0936\u0940\u0932 \u092a\u0930\u093f\u092f\u094b\u091c\u0928\u093e", 
+            "graded": true, 
+            "format": " \u091a\u093f\u0902\u0924\u0928\u0936\u0940\u0932 
+                \u092a\u0930\u093f\u092f\u094b\u091c\u0928\u093e / Reflective Project", 
+            "children": [
+                "i4x://ANUx/ANU-
+                    INDIA1x/vertical/efe3f47a5bc24894b726c229d6bf5968", 
+                "i4x://ANUx/ANU-
+                    INDIA1x/vertical/9106a1b1fad040858bad56fe5d48074e", 
+                "i4x://ANUx/ANU-
+                    INDIA1x/vertical/27d2cf635bd44038a1207461b761a63a", 
+                "i4x://ANUx/ANU-
+                    INDIA1x/vertical/94b719b765b046e2a811f1c4e4f84e5b"
+            ]
+        },
+        "i4x://ANUx/ANU-INDIA1x/vertical/0a3cd583cb1d4108bfbdaf57c511da3a": {
+            "id": "i4x://ANUx/ANU-
+                INDIA1x/vertical/0a3cd583cb1d4108bfbdaf57c511da3a", 
+            "type": "vertical", 
+            "display_name": "What you need to do this week / \u0907\u0938 
+                \u0939\u092b\u093c\u094d\u0924\u0947 \u0906\u092a\u0915\u094b 
+                \u0915\u094d\u092f\u093e-\u0915\u094d\u092f\u093e 
+                \u0915\u0930\u0928\u093e \u0939\u0948", 
+            "graded": false, 
+            "format": null, 
+            "children": [
+                "i4x://ANUx/ANU-INDIA1x/html/a20abbba4a0f4a578d96cbdd4b34307b"
+            ]
+        },
+        . . .
+    }
+
+.. _Get the Course Grading Policy:
+
+*****************************
+Get the Course Grading Policy
+*****************************
+
+.. autoclass:: course_structure_api.v0.views.CourseGradingPolicy
+
+**Example response**
+
+.. code-block:: json
+
+    HTTP 200 OK  
+    Vary: Accept   
+    Content-Type: text/html; charset=utf-8   
+    Allow: GET, HEAD, OPTIONS 
+
+    [
+        {
+            "assignment_type": "\u092a\u0939\u0932\u0947 
+            \u0939\u092b\u093c\u094d\u0924\u0947 \u0915\u093e 
+            \u0938\u0930\u094d\u0935\u0947\u0915\u094d\u0937\u0923 
+            / Week 1 Survey ", 
+            "count": 2, 
+            "dropped": 1, 
+            "weight": 0.03
+        }, 
+        {
+            "assignment_type": "\u092a\u093e\u0901\u091a\u0935\u0947\u0902 
+            \u0939\u092b\u093c\u094d\u0924\u0947 \u0915\u093e 
+            \u0938\u0930\u094d\u0935\u0947\u0915\u094d\u0937\u0923  
+            / Week 5 Survey ", 
+            "count": 2, 
+            "dropped": 1, 
+            "weight": 0.03
+        }, 
+        {
+            "assignment_type": "\u091a\u093f\u0902\u0924\u0928\u0936\u0940
+            \u0932 \u092a\u0930\u093f\u092f\u094b\u091c\u0928\u093e 
+            / Reflective Project", 
+            "count": 1, 
+            "dropped": 0, 
+            "weight": 0.2
+        },
+        . . .
+    ]

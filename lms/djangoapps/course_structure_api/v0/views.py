@@ -100,7 +100,7 @@ class CourseList(CourseViewMixin, ListAPIView):
         * num_pages: The number of pages listing courses.
 
         * results:  A list of courses returned. Each collection in the list
-          contains:
+          contains the following fields:
 
             * id: The unique identifier for the course.
 
@@ -156,27 +156,34 @@ class CourseDetail(CourseViewMixin, RetrieveAPIView):
     """
     **Use Case**
 
-        CourseDetail returns details for a course.
+        Get details for a specific course.
 
-    **Example requests**:
+    **Example Request**:
 
         GET /api/course_structure/v0/courses/{course_id}/
 
     **Response Values**
 
-        * category: The type of content.
-
+        * id: The unique identifier for the course.
+        
         * name: The name of the course.
 
-        * uri: The URI to use to get details of the course.
-
-        * course: The course number.
-
-        * due:  The due date. For courses, the value is always null.
+        * category: The type of content.
 
         * org: The organization specified for the course.
 
-        * id: The unique identifier for the course.
+        * run: The run of the course.
+
+        * course: The course number.
+
+        * uri: The URI to use to get details of the course.
+
+        * image_url: The URI for the course's main image.
+
+        * start: The course start date.
+
+        * end: The course end date. If course end date is not specified, the
+          value is null.
     """
 
     serializer_class = serializers.CourseSerializer
@@ -189,7 +196,8 @@ class CourseStructure(CourseViewMixin, RetrieveAPIView):
     """
     **Use Case**
 
-        Retrieves course structure.
+        Get the course structure. This endpoint returns all blocks in the
+        course.
 
     **Example requests**:
 
@@ -197,9 +205,27 @@ class CourseStructure(CourseViewMixin, RetrieveAPIView):
 
     **Response Values**
 
-        * root: ID of the root node of the structure
+        * root: The ID of the root node of the course structure.
 
-        * blocks: Dictionary mapping IDs to block nodes.
+        * blocks: A dictionary that maps block IDs to a collection of
+          information about each block. Each block contains the following
+          fields:
+
+          * id: The ID of the block.
+
+          * type: The type of block. Possible values include sequential,
+            vertical, html, problem, video, and discussion. The type can also be
+            the name of a custom type of block used for the course.
+
+          * display_name: The display name configured for the block.
+
+          * graded: Whether or not the sequential or problem is graded. true or
+            false.
+
+          * format: ??
+
+          * children: If the block has child blocks, a list of IDs of the child
+            blocks.
     """
     serializer_class = serializers.CourseStructureSerializer
     course = None
@@ -223,7 +249,7 @@ class CourseGradingPolicy(CourseViewMixin, ListAPIView):
     """
     **Use Case**
 
-        Retrieves course grading policy.
+        Get the course grading policy.
 
     **Example requests**:
 
@@ -231,14 +257,16 @@ class CourseGradingPolicy(CourseViewMixin, ListAPIView):
 
     **Response Values**
 
-        * assignment_type: The type of the assignment (e.g. Exam, Homework). Note: These values are course-dependent.
-          Do not make any assumptions based on assignment type.
+        * assignment_type: The type of the assignment, as configured by course
+          staff. For example, course staff might make assignment types Homework,
+          Quiz, and Exam.
 
-        * count: Number of assignments of the type.
+        * count: The number of assignments of the type.
 
         * dropped: Number of assignments of the type that are dropped.
 
-        * weight: Effect of the assignment type on grading.
+        * weight: The weight, or effect, of the assignment type on the learner's
+          final grade.
     """
 
     serializer_class = serializers.GradingPolicySerializer
