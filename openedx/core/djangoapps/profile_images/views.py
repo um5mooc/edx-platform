@@ -2,6 +2,7 @@
 This module implements the upload and remove endpoints of the profile image api.
 """
 from contextlib import closing
+import logging
 
 from django.utils.translation import ugettext as _
 from rest_framework import permissions, status
@@ -17,6 +18,8 @@ from openedx.core.lib.api.authentication import (
 from openedx.core.lib.api.permissions import IsUserInUrl, IsUserInUrlOrStaff
 from ..user_api.accounts.api import set_has_profile_image, get_profile_image_names
 from .images import validate_uploaded_image, create_profile_images, remove_profile_images, ImageValidationError
+
+log = logging.getLogger(__name__)
 
 
 class ProfileImageUploadView(APIView):
@@ -82,10 +85,16 @@ class ProfileImageUploadView(APIView):
                     )
 
                 # generate profile pic and thumbnails and store them
-                create_profile_images(uploaded_file, get_profile_image_names(username))
+                profile_image_names = get_profile_image_names(username)
+                create_profile_images(uploaded_file, profile_image_names)
 
                 # update the user account to reflect that a profile image is available.
                 set_has_profile_image(username, True)
+
+                log.info(
+                    'Generated and uploaded images %(image_names)s for user %(user_id)s',
+                    {'image_names': profile_image_names.values(), 'user_id': request.user.id}
+                )
         except Exception as error:
             return Response(
                 {
@@ -135,7 +144,13 @@ class ProfileImageRemoveView(APIView):
             set_has_profile_image(username, False)
 
             # remove physical files from storage.
-            remove_profile_images(get_profile_image_names(username))
+            profile_image_names = get_profile_image_names(username)
+            remove_profile_images(profile_image_names)
+
+            log.info(
+                'Deleted images %(image_names)s for user %(user_id)s',
+                {'image_names': profile_image_names.values(), 'user_id': request.user.id}
+            )
         except UserNotFound:
             return Response(status=status.HTTP_404_NOT_FOUND)
         except Exception as error:
