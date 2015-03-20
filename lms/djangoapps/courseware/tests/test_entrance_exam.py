@@ -9,7 +9,12 @@ from courseware.model_data import FieldDataCache
 from courseware.module_render import get_module, toc_for_course
 from courseware.tests.factories import UserFactory, InstructorFactory, StaffFactory
 from courseware.tests.helpers import LoginEnrollmentTestCase
-from courseware.entrance_exams import get_entrance_exam_content_info, get_entrance_exam_score
+from courseware.entrance_exams import (
+    get_entrance_exam_content_info,
+    get_entrance_exam_score,
+    can_skip_entrance_exam,
+    has_passed_entrance_exam,
+)
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
@@ -23,7 +28,7 @@ from util.milestones_helpers import (
     seed_milestone_relationship_types,
 )
 from student.models import CourseEnrollment
-from student.tests.factories import CourseEnrollmentFactory
+from student.tests.factories import CourseEnrollmentFactory, AnonymousUserFactory
 from mock import patch, Mock
 import mock
 
@@ -144,6 +149,7 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
                 self.milestone_relationship_types['FULFILLS'],
                 self.milestone
             )
+        self.anonymous_user = AnonymousUserFactory()
         user = UserFactory()
         self.request = RequestFactory()
         self.request.user = user
@@ -502,7 +508,7 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
             self.assertIn(toc_section, unlocked_toc)
 
     @patch.dict('django.conf.settings.FEATURES', {'ENTRANCE_EXAMS': True})
-    def test_skip_entrance_exame_gating(self):
+    def test_skip_entrance_exam_gating(self):
         """
         Tests gating is disabled if skip entrance exam is set for a user.
         """
@@ -536,7 +542,7 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         for toc_section in self.expected_unlocked_toc:
             self.assertIn(toc_section, unlocked_toc)
 
-    def test_entrance_exame_gating_for_staff(self):
+    def test_entrance_exam_gating_for_staff(self):
         """
         Tests gating is disabled if user is member of staff.
         """
@@ -564,58 +570,31 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         """
         Test courseware access page without passing entrance exam
         """
-        course = CourseFactory.create(
-            org='edX',
-            course='900',
-            run='test_ee',
-            entrance_exam_enabled=True
-        )
-        chapter = ItemFactory.create(
-            parent=course,
-            category='chapter',
-            display_name="Week 1"
-        )
-        user = UserFactory.create()
-        self.login(user.email, 'test')
-        CourseEnrollmentFactory(user=user, course_id=course.id)
-
+        # Mocking get_required_content with non empty list to assume user has not passed entrance exam
         url = reverse(
             'courseware_chapter',
-            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+            kwargs={'course_id': unicode(self.course.id), 'chapter': self.chapter.url_name}
         )
         response = self.client.get(url)
         self.assertRedirects(
             response,
             reverse(
                 'courseware',
-                args=[unicode(course.id)]
+                args=[unicode(self.course.id)]
             )
         )
         self.assertEqual(response.status_code, 302)
 
     @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    @patch('courseware.entrance_exams.get_required_content', Mock(return_value=[]))
     def test_courseware_page_access_after_passing_entrance_exam(self):
         """
         Test courseware access page after passing entrance exam
         """
-        course = CourseFactory.create(
-            org='edX',
-            course='900',
-            run='test_ee',
-            entrance_exam_enabled=True
-        )
-        chapter = ItemFactory.create(
-            parent=course,
-            category='chapter',
-            display_name="Week 1"
-        )
-        user = UserFactory.create()
-        self.login(user.email, 'test')
-        CourseEnrollmentFactory(user=user, course_id=course.id)
-
+        # Mocking get_required_content with empty list to assume user has passed entrance exam
         url = reverse(
             'courseware_chapter',
-            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+            kwargs={'course_id': unicode(self.course.id), 'chapter': self.chapter.url_name}
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -626,24 +605,40 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         """
         Test courseware access page without passing entrance exam but with staff user
         """
-        course = CourseFactory.create(
-            org='edX',
-            course='900',
-            run='test_ee',
-            entrance_exam_enabled=True
-        )
-        chapter = ItemFactory.create(
-            parent=course,
-            category='chapter',
-            display_name="Week 1"
-        )
-        staff_user = StaffFactory.create(course_key=course.id)
+        self.logout()
+        staff_user = StaffFactory.create(course_key=self.course.id)
         self.login(staff_user.email, 'test')
-        CourseEnrollmentFactory(user=staff_user, course_id=course.id)
+        CourseEnrollmentFactory(user=staff_user, course_id=self.course.id)
 
         url = reverse(
             'courseware_chapter',
-            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+            kwargs={'course_id': unicode(self.course.id), 'chapter': self.chapter.url_name}
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': False})
+    def test_courseware_page_access_when_entrance_exams_disabled(self):
+        """
+        Test courseware page access when ENTRANCE_EXAMS feature is disabled
+        """
+        url = reverse(
+            'courseware_chapter',
+            kwargs={'course_id': unicode(self.course.id), 'chapter': self.chapter.url_name}
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    def test_can_skip_entrance_exam_with_anonymous_user(self):
+        """
+        Test can_skip_entrance_exam method with anonymous user
+        """
+        self.assertFalse(can_skip_entrance_exam(self.anonymous_user, self.course))
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    def test_has_passed_entrance_exam_with_anonymous_user(self):
+        """
+        Test has_passed_entrance_exam method with anonymous user
+        """
+        self.assertFalse(has_passed_entrance_exam(self.anonymous_user, self.course))

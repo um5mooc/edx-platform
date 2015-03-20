@@ -54,7 +54,7 @@ def has_passed_entrance_exam(user, course):
         return True
 
 
-def can_view_courseware_with_entrance_exam(user, course):
+def can_view_courseware_with_entrance_exam(user, course):  # pylint: disable=invalid-name
     """
     Returns True if user is allowed to access courseware for a course
     where entrance exam is enabled otherwise return False.
