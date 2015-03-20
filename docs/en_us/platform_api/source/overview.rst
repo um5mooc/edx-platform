@@ -6,8 +6,8 @@ The edX Platform APIs are a rapidly growing and evolving set of capabilities
 that enable you to build web, desktop, and mobile applications that work with
 your Open edX instance.
 
-The edX Platform APIs uses Representational State Transfer (REST) design
-principles and supports the JavaScript Object Notation (JSON) data-interchange
+The edX Platform APIs use Representational State Transfer (REST) design
+principles and support the JavaScript Object Notation (JSON) data-interchange
 format. The REST APIs are simple, lightweight, and optimized.
 
 **********************************************

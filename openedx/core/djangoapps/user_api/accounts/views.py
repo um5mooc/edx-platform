@@ -58,7 +58,7 @@ class AccountView(APIView):
 
                 * level_of_education: One of the following values:
 
-                    * "p": Doctorate
+                    * "p": PhD or Doctorate
                     * "m": Master's or professional degree
                     * "b": Bachelor's degree
                     * "a": Associate's degree
