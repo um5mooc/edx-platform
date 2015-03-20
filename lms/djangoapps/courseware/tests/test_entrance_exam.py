@@ -8,17 +8,27 @@ from django.core.urlresolvers import reverse
 from courseware.model_data import FieldDataCache
 from courseware.module_render import get_module, toc_for_course
 from courseware.tests.factories import UserFactory, InstructorFactory, StaffFactory
-from courseware.courses import get_entrance_exam_content_info, get_entrance_exam_score
+from courseware.tests.helpers import LoginEnrollmentTestCase
+from courseware.entrance_exams import get_entrance_exam_content_info, get_entrance_exam_score
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
-from util import milestones_helpers
+from util.milestones_helpers import (
+    add_milestone,
+    add_course_milestone,
+    get_namespace_choices,
+    generate_milestone_namespace,
+    add_course_content_milestone,
+    get_milestone_relationship_types,
+    seed_milestone_relationship_types,
+)
 from student.models import CourseEnrollment
-from mock import patch
+from student.tests.factories import CourseEnrollmentFactory
+from mock import patch, Mock
 import mock
 
 
-class EntranceExamTestCases(ModuleStoreTestCase):
+class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
     """
     Check that content is properly gated.  Create a test course from scratch to mess with.
     We typically assume that the Entrance Exam feature flag is set to True in test.py
@@ -110,8 +120,8 @@ class EntranceExamTestCases(ModuleStoreTestCase):
             display_name="Exam Problem - Problem 3"
         )
         if settings.FEATURES.get('ENTRANCE_EXAMS', False):
-            namespace_choices = milestones_helpers.get_namespace_choices()
-            milestone_namespace = milestones_helpers.generate_milestone_namespace(
+            namespace_choices = get_namespace_choices()
+            milestone_namespace = generate_milestone_namespace(
                 namespace_choices.get('ENTRANCE_EXAM'),
                 self.course.id
             )
@@ -120,15 +130,15 @@ class EntranceExamTestCases(ModuleStoreTestCase):
                 'namespace': milestone_namespace,
                 'description': 'Testing Courseware Entrance Exam Chapter',
             }
-            milestones_helpers.seed_milestone_relationship_types()
-            self.milestone_relationship_types = milestones_helpers.get_milestone_relationship_types()
-            self.milestone = milestones_helpers.add_milestone(self.milestone)
-            milestones_helpers.add_course_milestone(
+            seed_milestone_relationship_types()
+            self.milestone_relationship_types = get_milestone_relationship_types()
+            self.milestone = add_milestone(self.milestone)
+            add_course_milestone(
                 unicode(self.course.id),
                 self.milestone_relationship_types['REQUIRES'],
                 self.milestone
             )
-            milestones_helpers.add_course_content_milestone(
+            add_course_content_milestone(
                 unicode(self.course.id),
                 unicode(self.entrance_exam.location),
                 self.milestone_relationship_types['FULFILLS'],
@@ -547,3 +557,93 @@ class EntranceExamTestCases(ModuleStoreTestCase):
         )
         for toc_section in self.expected_unlocked_toc:
             self.assertIn(toc_section, unlocked_toc)
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    @patch('courseware.entrance_exams.get_required_content', Mock(return_value=['a value']))
+    def test_courseware_page_access_without_passing_entrance_exam(self):
+        """
+        Test courseware access page without passing entrance exam
+        """
+        course = CourseFactory.create(
+            org='edX',
+            course='900',
+            run='test_ee',
+            entrance_exam_enabled=True
+        )
+        chapter = ItemFactory.create(
+            parent=course,
+            category='chapter',
+            display_name="Week 1"
+        )
+        user = UserFactory.create()
+        self.login(user.email, 'test')
+        CourseEnrollmentFactory(user=user, course_id=course.id)
+
+        url = reverse(
+            'courseware_chapter',
+            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+        )
+        response = self.client.get(url)
+        self.assertRedirects(
+            response,
+            reverse(
+                'courseware',
+                args=[unicode(course.id)]
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    def test_courseware_page_access_after_passing_entrance_exam(self):
+        """
+        Test courseware access page after passing entrance exam
+        """
+        course = CourseFactory.create(
+            org='edX',
+            course='900',
+            run='test_ee',
+            entrance_exam_enabled=True
+        )
+        chapter = ItemFactory.create(
+            parent=course,
+            category='chapter',
+            display_name="Week 1"
+        )
+        user = UserFactory.create()
+        self.login(user.email, 'test')
+        CourseEnrollmentFactory(user=user, course_id=course.id)
+
+        url = reverse(
+            'courseware_chapter',
+            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    @patch('courseware.entrance_exams.get_required_content', Mock(return_value=['a value']))
+    def test_courseware_page_access_with_staff_user_without_passing_entrance_exam(self):
+        """
+        Test courseware access page without passing entrance exam but with staff user
+        """
+        course = CourseFactory.create(
+            org='edX',
+            course='900',
+            run='test_ee',
+            entrance_exam_enabled=True
+        )
+        chapter = ItemFactory.create(
+            parent=course,
+            category='chapter',
+            display_name="Week 1"
+        )
+        staff_user = StaffFactory.create(course_key=course.id)
+        self.login(staff_user.email, 'test')
+        CourseEnrollmentFactory(user=staff_user, course_id=course.id)
+
+        url = reverse(
+            'courseware_chapter',
+            kwargs={'course_id': unicode(course.id), 'chapter': chapter.url_name}
+        )
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)

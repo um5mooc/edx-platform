@@ -29,6 +29,7 @@ from capa.xqueue_interface import XQueueInterface
 from courseware.access import has_access, get_user_role
 from courseware.masquerade import setup_masquerade
 from courseware.model_data import FieldDataCache, DjangoKeyValueStore
+from courseware.entrance_exams import get_required_content, calculate_entrance_exam_score
 from lms.djangoapps.lms_xblock.field_data import LmsFieldData
 from lms.djangoapps.lms_xblock.runtime import LmsModuleSystem, unquote_slashes, quote_slashes
 from lms.djangoapps.lms_xblock.models import XBlockAsidesConfig
@@ -133,7 +134,7 @@ def toc_for_course(request, course, active_chapter, active_section, field_data_c
             return None
 
         # Check to see if the course is gated on milestone-required content (such as an Entrance Exam)
-        required_content = milestones_helpers.get_required_content(course, request.user)
+        required_content = get_required_content(course, request.user)
 
         chapters = list()
         for chapter in course_module.get_display_items():
@@ -372,7 +373,7 @@ def get_module_system_for_user(user, field_data_cache,
             inner_get_module
         )
         exam_modules = [module for module in exam_module_generators]
-        exam_score = milestones_helpers.calculate_entrance_exam_score(user, course_descriptor, exam_modules)
+        exam_score = calculate_entrance_exam_score(user, course_descriptor, exam_modules)
         return exam_score
 
     def _fulfill_content_milestones(user, course_key, content_key):

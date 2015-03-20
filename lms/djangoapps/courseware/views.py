@@ -32,12 +32,17 @@ from markupsafe import escape
 
 from courseware import grades
 from courseware.access import has_access, _adjust_start_date_for_beta_testers
-from courseware.courses import get_courses, get_course, get_studio_url, get_course_with_access, sort_by_announcement,\
-    get_entrance_exam_content_info
-from courseware.courses import sort_by_start_date, get_entrance_exam_score
+from courseware.courses import (
+    get_courses, get_course,
+    get_studio_url, get_course_with_access,
+    sort_by_announcement,
+    sort_by_start_date,
+)
 from courseware.masquerade import setup_masquerade
 from courseware.model_data import FieldDataCache
 from .module_render import toc_for_course, get_module_for_descriptor, get_module
+from .entrance_exams import get_entrance_exam_content_info, get_entrance_exam_score
+from .entrance_exams import can_view_courseware_with_entrance_exam
 from courseware.models import StudentModule, StudentModuleHistory
 from course_modes.models import CourseMode
 
@@ -373,8 +378,8 @@ def _index_bulk_op(request, course_key, chapter, section, position):
     if chapter and getattr(course, 'entrance_exam_enabled', False):
         chapter_descriptor = course.get_child_by(lambda m: m.location.name == chapter)
         if chapter_descriptor and not getattr(chapter_descriptor, 'is_entrance_exam', False) \
-                and not has_access(user, 'view_courseware_with_entrance_exam', course):
-            # entrance exam is not passed therefore redirect to the courseware
+                and not can_view_courseware_with_entrance_exam(user, course):
+            # user is not allowed to view courseware therefore redirect to entrance exam
             log.info(
                 u'User %d tried to view course %s '
                 u'without passing entrance exam',
@@ -687,8 +692,8 @@ def course_info(request, course_id):
     with modulestore().bulk_operations(course_key):
         course = get_course_with_access(request.user, 'load', course_key)
 
-        # check to see if there is entrance exam not passed then it redirect to courseware
-        if not has_access(request.user, 'view_courseware_with_entrance_exam', course):
+        # check to see if there is entrance exam not passed then redirect to entrance exam
+        if not can_view_courseware_with_entrance_exam(request.user, course):
             return redirect(reverse('courseware', args=[unicode(course.id)]))
 
         # check to see if there is a required survey that must be taken before
