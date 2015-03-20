@@ -3,7 +3,7 @@ Course wiki
 """
 
 from bok_choy.page_object import PageObject
-from bok_choy.promise import Promise, EmptyPromise
+from ...pages.studio.utils import type_in_codemirror
 
 
 class CourseWikiPage(PageObject):
@@ -19,11 +19,17 @@ class CourseWikiPage(PageObject):
         """
         return self.q(css='.breadcrumb').present
 
-    def open_article_editor(self):
+    def edit_article(self, content):
         edit_button = self.q(css='.fa-pencil')
         text_edit_box = self.q(css='.CodeMirror-cursor')
         edit_button.click()
         self.wait_for_element_presence('.CodeMirror-scroll', 'wait for wiki edit screen')
+
+        type_in_codemirror(self, 0, content)
+        self.q(css='button[name="save"]').click()
+        self.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
+
+
 
     @property
     def article_name(self):
@@ -33,67 +39,3 @@ class CourseWikiPage(PageObject):
         return str(self.q(css='.main-article h1').text[0])
 
 
-    def go_to_tab(self, tab_name):
-        """
-        Navigate to the tab `tab_name`.
-        """
-
-        if tab_name not in ['Courseware', 'Course Info', 'Discussion', 'Wiki', 'Progress']:
-            self.warning("'{0}' is not a valid tab name".format(tab_name))
-
-        # The only identifier for individual tabs is the link href
-        # so we find the tab with `tab_name` in its text.
-        tab_css = self._tab_css(tab_name)
-
-        if tab_css is not None:
-            self.q(css=tab_css).first.click()
-        else:
-            self.warning("No tabs found for '{0}'".format(tab_name))
-
-        self._is_on_tab_promise(tab_name).fulfill()
-
-    def is_on_tab(self, tab_name):
-        """
-        Return a boolean indicating whether the current tab is `tab_name`.
-        Because this is a public method, it checks that we're on the right page
-        before accessing the DOM.
-        """
-        return self._is_on_tab(tab_name)
-
-    def _tab_css(self, tab_name):
-        """
-        Return the CSS to click for `tab_name`.
-        If no tabs exist for that name, return `None`.
-        """
-        all_tabs = self.tab_names
-
-        try:
-            tab_index = all_tabs.index(tab_name)
-        except ValueError:
-            return None
-        else:
-            return 'ol.course-tabs li:nth-of-type({0}) a'.format(tab_index + 1)
-
-    def _is_on_tab(self, tab_name):
-        """
-        Return a boolean indicating whether the current tab is `tab_name`.
-        This is a private method, so it does NOT enforce the page check,
-        which is what we want when we're polling the DOM in a promise.
-        """
-        current_tab_list = self.q(css='ol.course-tabs > li > a.active').text
-
-        if len(current_tab_list) == 0:
-            self.warning("Could not find current tab")
-            return False
-        else:
-            return current_tab_list[0].strip().split('\n')[0] == tab_name
-
-    def _is_on_tab_promise(self, tab_name):
-        """
-        Return a `Promise` that the user is on the tab `tab_name`.
-        """
-        # Use the private version of _is_on_tab to skip the page check
-        return EmptyPromise(
-            lambda: self._is_on_tab(tab_name),
-            "{0} is the current tab".format(tab_name)
-        )

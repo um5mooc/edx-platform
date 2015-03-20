@@ -30,7 +30,6 @@ from ...pages.lms.problem import ProblemPage
 from ...pages.lms.video.video import VideoPage
 from ...pages.lms.courseware import CoursewarePage
 from ...pages.studio.settings import SettingsPage
-from ...pages.studio.utils import type_in_codemirror
 from ...pages.lms.login_and_register import CombinedLoginAndRegisterPage
 from ...pages.lms.track_selection import TrackSelectionPage
 from ...pages.lms.pay_and_verify import PaymentAndVerificationFlow, FakePaymentPage
@@ -460,11 +459,7 @@ class CourseWikiTest(UniqueCourseTest):
         """
         Wiki page by default is editable for students
         """
-        self.course_wiki_page.open_article_editor()
-        type_in_codemirror(self.course_wiki_page, 0, "hello")
-        self.course_wiki_page.q(css='button[name="save"]').click()
-        self.course_wiki_page.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
-
+        self.course_wiki_page.edit_article("hello")
 
 
 class HighLevelTabTest(UniqueCourseTest):
