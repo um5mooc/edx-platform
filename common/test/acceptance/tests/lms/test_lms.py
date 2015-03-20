@@ -465,10 +465,6 @@ class CourseWikiTest(UniqueCourseTest):
         self.course_wiki_page.q(css='button[name="save"]').click()
         self.course_wiki_page.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
 
-        from nose.tools import set_trace
-        set_trace()
-        self.assertEqual(1, 1)
-
 
 
 class HighLevelTabTest(UniqueCourseTest):
