@@ -14,9 +14,7 @@ from opaque_keys.edx.locations import SlashSeparatedCourseKey
 
 from student.tests.factories import UserFactory, CourseEnrollmentFactory
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from xmodule.modulestore.tests.django_utils import (
-    TEST_DATA_MOCK_MODULESTORE, TEST_DATA_MIXED_TOY_MODULESTORE
-)
+from xmodule.modulestore.tests.django_utils import TEST_DATA_MIXED_TOY_MODULESTORE
 from xmodule.modulestore.tests.factories import CourseFactory
 
 # This import is for an lms djangoapp.
