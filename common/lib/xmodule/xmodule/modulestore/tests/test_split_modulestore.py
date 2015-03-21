@@ -12,7 +12,7 @@ import uuid
 from contracts import contract
 from nose.plugins.attrib import attr
 
-import tempdir
+from openedx.core.lib.tempdir import mkdtemp_clean
 
 from xblock.fields import Reference, ReferenceList, ReferenceValueDict
 from xmodule.course_module import CourseDescriptor
@@ -53,7 +53,7 @@ class SplitModuleTest(unittest.TestCase):
     }
     modulestore_options = {
         'default_class': 'xmodule.raw_module.RawDescriptor',
-        'fs_root': tempdir.mkdtemp_clean(),
+        'fs_root': mkdtemp_clean(),
         'xblock_mixins': (InheritanceMixin, XModuleMixin, EditInfoMixin)
     }
 
