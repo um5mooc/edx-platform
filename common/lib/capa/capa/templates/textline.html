@@ -13,6 +13,7 @@
     % if hidden:
       <div style="display:none;" name="${hidden}" inputid="input_${id}" />
     % endif
+        <p>${question_label}</p>
     <label>    ${label}
   <input type="text" name="input_${id}" id="input_${id}" aria-label="${label}" aria-describedby="answer_${id}" value="${value|h}"
         % if do_math:

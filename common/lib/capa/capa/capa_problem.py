@@ -139,6 +139,8 @@ class LoncapaProblem(object):
         self.do_reset()
         self.problem_id = id
         self.capa_system = capa_system
+        self.question_label = ""
+        self.duplicate_question = ""
 
         state = state or {}
 
@@ -732,6 +734,7 @@ class LoncapaProblem(object):
                 'status': status,
                 'id': input_id,
                 'input_state': self.input_state[input_id],
+                'question_label': self.question_label if self.question_label != self.duplicate_question else "",
                 'answervariable': answervariable,
                 'feedback': {
                     'message': msg,
@@ -739,6 +742,8 @@ class LoncapaProblem(object):
                     'hintmode': hintmode,
                 }
             }
+            if self.question_label:
+                self.duplicate_question = self.question_label
 
             input_type_cls = inputtypes.registry.get_class_for_tag(problemtree.tag)
             # save the input type so that we can make ajax calls on it if we need to
@@ -766,10 +771,13 @@ class LoncapaProblem(object):
             item_child = self.get_child(item)
             if item_xhtml is not None:
                 if item_child is not None and item_child in self.responders:
+                    self.question_label = item_xhtml.text
                     item_xhtml.text = ""
                 if item_sibling is None or item_sibling not in self.responders or item_xhtml.tag != 'p':
                     # don't add item if it is question paragraph, will be added through label
                     tree.append(item_xhtml)
+                else:
+                    self.question_label = item_xhtml.text
 
         if tree.tag in html_transforms:
             tree.tag = html_transforms[problemtree.tag]['tag']
