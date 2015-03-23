@@ -30,7 +30,7 @@ class AccountSettingsTest(WebAppTest):
 
         AutoAuthPage(self.browser, username=self.USERNAME, email=self.EMAIL).visit()
 
-    @skip('skip for now');
+    @skip('skip for now')
     def test_dashboard_account_settings_link(self):
         """
         Scenario: Verify that account settings link is present on dashboard page and we can navigate to it.
@@ -47,7 +47,7 @@ class AccountSettingsTest(WebAppTest):
         self.assertTrue('Account Settings' in self.dashboard_page.username_dropdown_links)
         self.dashboard_page.click_account_settings_link()
 
-    @skip('skip for now');
+    @skip('skip for now')
     def test_dashboard_account_settings(self):
         """
         Scenario: Verify that account settings works as expected.
