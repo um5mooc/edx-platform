@@ -585,7 +585,6 @@ class HighLevelTabTest(UniqueCourseTest):
         )
         self.assertEqual(expected_article_name, course_wiki.article_name)
 
-
     def test_courseware_nav(self):
         """
         Navigate to a particular unit in the courseware.
