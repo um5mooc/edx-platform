@@ -11,8 +11,9 @@ from pytz import UTC
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError
 from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_noop
 
 from student.models import UserProfile
 
@@ -350,14 +351,11 @@ def validate_user_preference_serializer(serializer, preference_key, preference_v
         PreferenceValidationError: the supplied key and/or value for a user preference are invalid.
     """
     if preference_value is None or unicode(preference_value).strip() == '':
+        format_string = ugettext_noop(u"Preference '{preference_key}' cannot be set to an empty value.")
         raise PreferenceValidationError({
             preference_key: {
-                "developer_message": u"Preference '{preference_key}' cannot be set to an empty value.".format(
-                    preference_key=preference_key
-                ),
-                "user_message": _(u"Preference '{preference_key}' cannot be set to an empty value.").format(
-                    preference_key=preference_key
-                )
+                "developer_message": format_string.format(preference_key=preference_key),
+                "user_message": _(format_string).format(preference_key=preference_key)
             }
         })
     if not serializer.is_valid():

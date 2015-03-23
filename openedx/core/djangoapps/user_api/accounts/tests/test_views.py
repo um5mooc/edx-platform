@@ -6,6 +6,7 @@ from mock import patch
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.test.testcases import TransactionTestCase
 from rest_framework.test import APITestCase, APIClient
 
 from student.tests.factories import UserFactory
@@ -509,3 +510,37 @@ class TestAccountAPI(UserAPITestCase):
             error_response.data["developer_message"]
         )
         self.assertIsNone(error_response.data["user_message"])
+
+
+@unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
+class TestAccountAPITransactions(TransactionTestCase):
+    """
+    Tests the transactional behavior of the account API
+    """
+    test_password = "test"
+
+    def setUp(self):
+        super(TestAccountAPITransactions, self).setUp()
+        self.client = APIClient()
+        self.user = UserFactory.create(password=self.test_password)
+        self.url = reverse("accounts_api", kwargs={'username': self.user.username})
+
+    @patch('openedx.core.djangoapps.user_api.accounts.serializers.AccountLegacyProfileSerializer.save')
+    def test_update_account_settings_rollback(self, user_profile_serializer_save):
+        """
+        Verify that updating preferences is transactional when a failure happens.
+        """
+        # Send a PATCH request with updates to both the user and the profile models.
+        # The second update to the profile will throw an exception which should
+        # cause the whole operation to be rolled back.
+        user_profile_serializer_save.side_effect = [Exception, None]
+        self.client.login(username=self.user.username, password=self.test_password)
+        json_data = { "name": "New Name", "gender": "o" }
+        response = self.client.patch(self.url, data=json.dumps(json_data), content_type="application/merge-patch+json")
+        self.assertEqual(400, response.status_code)
+
+        # Verify that GET returns the original preferences
+        response = self.client.get(self.url)
+        data = response.data
+        self.assertEqual(self.user.first_name + " " + self.user.last_name, data["name"])
+        self.assertEqual(u"m", data["gender"])

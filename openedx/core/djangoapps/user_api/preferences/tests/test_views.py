@@ -306,7 +306,7 @@ class TestPreferencesAPITransactions(TransactionTestCase):
         self.url = reverse("preferences_api", kwargs={'username': self.user.username})
 
     @patch('openedx.core.djangoapps.user_api.models.UserPreference.delete')
-    def test_update_preferences_rollback(self, delete_serializer):
+    def test_update_preferences_rollback(self, delete_user_preference):
         """
         Verify that updating preferences is transactional when a failure happens.
         """
@@ -315,14 +315,10 @@ class TestPreferencesAPITransactions(TransactionTestCase):
         set_user_preference(self.user, "b", "2")
         set_user_preference(self.user, "c", "3")
 
-        # Patch the serializer so that it throws an exception on the second save
-        # serializer_save = patch('openedx.core.djangoapps.user_api.serializers.RawUserPreferenceSerializer.save')
-        # serializer_save.start()
-        # self.addCleanup(serializer_save.stop)
-        # serializer_save.side_effect = [Exception, None]
-        delete_serializer.side_effect = [Exception, None]
-
-        # Send the patch request and verify that it throws an error when the delete fails
+        # Send a PATCH request with two updates and a delete. The delete should fail
+        # after one of the updates has happened, in which case the whole operation
+        # should be rolled back.
+        delete_user_preference.side_effect = [Exception, None]
         self.client.login(username=self.user.username, password=self.test_password)
         json_data = {
             "a": "2",
