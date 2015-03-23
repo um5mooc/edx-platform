@@ -77,7 +77,6 @@ def get_user_preferences(requesting_user, username=None):
 
 
 @intercept_errors(UserAPIInternalError, ignore_errors=[UserAPIRequestError])
-@transaction.commit_on_success
 def update_user_preferences(requesting_user, update, username=None):
     """Update the user preferences for the given username.
 
@@ -138,7 +137,6 @@ def update_user_preferences(requesting_user, update, username=None):
 
 
 @intercept_errors(UserAPIInternalError, ignore_errors=[UserAPIRequestError])
-@transaction.commit_on_success
 def set_user_preference(requesting_user, preference_key, preference_value, username=None):
     """Update a user preference for the given username.
 
@@ -173,7 +171,6 @@ def set_user_preference(requesting_user, preference_key, preference_value, usern
 
 
 @intercept_errors(UserAPIInternalError, ignore_errors=[UserAPIRequestError])
-@transaction.commit_on_success
 def delete_user_preference(requesting_user, preference_key, username=None):
     """Deletes a user preference on behalf of a requesting user.
 
@@ -353,11 +350,15 @@ def validate_user_preference_serializer(serializer, preference_key, preference_v
         PreferenceValidationError: the supplied key and/or value for a user preference are invalid.
     """
     if preference_value is None or unicode(preference_value).strip() == '':
-        message = _(u"Preference '{preference_key}' cannot be set to an empty value.").format(
-            preference_key=preference_key
-        )
         raise PreferenceValidationError({
-            preference_key: {"developer_message": message, "user_message": message}
+            preference_key: {
+                "developer_message": u"Preference '{preference_key}' cannot be set to an empty value.".format(
+                    preference_key=preference_key
+                ),
+                "user_message": _(u"Preference '{preference_key}' cannot be set to an empty value.").format(
+                    preference_key=preference_key
+                )
+            }
         })
     if not serializer.is_valid():
         developer_message = u"Value '{preference_value}' not valid for preference '{preference_key}': {error}".format(

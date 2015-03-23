@@ -6,9 +6,13 @@ Unit tests for preference APIs.
 import unittest
 import ddt
 import json
+from mock import patch
 
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.test.testcases import TransactionTestCase
+from rest_framework.test import APIClient
+from student.tests.factories import UserFactory
 
 from ...accounts.tests.test_views import UserAPITestCase
 from ..api import set_user_preference
@@ -286,6 +290,56 @@ class TestPreferencesAPI(UserAPITestCase):
             },
             expected_status=404
         )
+
+
+@unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
+class TestPreferencesAPITransactions(TransactionTestCase):
+    """
+    Tests the transactional behavior of the preferences API
+    """
+    test_password = "test"
+
+    def setUp(self):
+        super(TestPreferencesAPITransactions, self).setUp()
+        self.client = APIClient()
+        self.user = UserFactory.create(password=self.test_password)
+        self.url = reverse("preferences_api", kwargs={'username': self.user.username})
+
+    @patch('openedx.core.djangoapps.user_api.models.UserPreference.delete')
+    def test_update_preferences_rollback(self, delete_serializer):
+        """
+        Verify that updating preferences is transactional when a failure happens.
+        """
+        # Create some test preferences values.
+        set_user_preference(self.user, "a", "1")
+        set_user_preference(self.user, "b", "2")
+        set_user_preference(self.user, "c", "3")
+
+        # Patch the serializer so that it throws an exception on the second save
+        # serializer_save = patch('openedx.core.djangoapps.user_api.serializers.RawUserPreferenceSerializer.save')
+        # serializer_save.start()
+        # self.addCleanup(serializer_save.stop)
+        # serializer_save.side_effect = [Exception, None]
+        delete_serializer.side_effect = [Exception, None]
+
+        # Send the patch request and verify that it throws an error when the delete fails
+        self.client.login(username=self.user.username, password=self.test_password)
+        json_data = {
+            "a": "2",
+            "b": None,
+            "c": "1",
+        }
+        response = self.client.patch(self.url, data=json.dumps(json_data), content_type="application/merge-patch+json")
+        self.assertEqual(400, response.status_code)
+
+        # Verify that GET returns the original preferences
+        response = self.client.get(self.url)
+        expected_preferences = {
+            "a": "1",
+            "b": "2",
+            "c": "3",
+        }
+        self.assertEqual(expected_preferences, response.data)
 
 
 @ddt.ddt

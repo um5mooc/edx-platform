@@ -92,7 +92,6 @@ def get_account_settings(requesting_user, username=None, configuration=None, vie
     return visible_settings
 
 
-@transaction.commit_on_success
 @intercept_errors(UserAPIInternalError, ignore_errors=[UserAPIRequestError])
 def update_account_settings(requesting_user, update, username=None):
     """Update user account information.
@@ -154,7 +153,7 @@ def update_account_settings(requesting_user, update, username=None):
     if read_only_fields:
         for read_only_field in read_only_fields:
             field_errors[read_only_field] = {
-                "developer_message": "This field is not editable via this API",
+                "developer_message": u"This field is not editable via this API",
                 "user_message": _(u"Field '{field_name}' cannot be edited.").format(field_name=read_only_field)
             }
             del update[read_only_field]
