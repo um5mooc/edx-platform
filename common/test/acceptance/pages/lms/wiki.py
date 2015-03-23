@@ -38,14 +38,12 @@ class CourseWikiPage(PageObject):
         Editor must be open already. This will replace any content in the editor
         with new content
         """
-        self.confirm_editor_open
         type_in_codemirror(self, 0, content)
 
     def save_wiki_content(self):
         """
         When the editor is open, click save
         """
-        self.confirm_editor_open
         self.q(css='button[name="save"]').click()
         self.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
 

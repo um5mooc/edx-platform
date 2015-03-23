@@ -18,7 +18,6 @@ from ..helpers import (
     select_option_by_value,
     element_has_text
 )
-from ...pages.studio.utils import type_in_codemirror
 from ...pages.lms.auto_auth import AutoAuthPage
 from ...pages.lms.create_mode import ModeCreationPage
 from ...pages.common.logout import LogoutPage
@@ -473,7 +472,6 @@ class CourseWikiTest(UniqueCourseTest):
         self.assertEqual(content, actual_content)
 
 
-
 class HighLevelTabTest(UniqueCourseTest):
     """
     Tests that verify each of the high-level tabs available within a course.
@@ -580,9 +578,11 @@ class HighLevelTabTest(UniqueCourseTest):
         self.assertTrue(self.tab_nav.is_on_tab('Wiki'))
 
         # Assert that a default wiki is created
-        expected_article_name = self.course_info['org'] + "." + \
-                                 self.course_info['number'] + "." + \
-                                 self.course_info['run']
+        expected_article_name = "{org}.{course_number}.{course_run}".format(
+            org=self.course_info['org'],
+            course_number=self.course_info['number'],
+            course_run=self.course_info['run']
+        )
         self.assertEqual(expected_article_name, course_wiki.article_name)
 
 
