@@ -18,6 +18,7 @@ from ..helpers import (
     select_option_by_value,
     element_has_text
 )
+from ...pages.studio.utils import type_in_codemirror
 from ...pages.lms.auto_auth import AutoAuthPage
 from ...pages.lms.create_mode import ModeCreationPage
 from ...pages.common.logout import LogoutPage
@@ -457,28 +458,20 @@ class CourseWikiTest(UniqueCourseTest):
 
     def test_edit_course_wiki(self):
         """
-        Wiki page by default is editable for students
+        Wiki page by default is editable for students.
+
+        After accessing the course wiki,
+        Replace the content of the default page
+        Confirm new content has been saved
+
         """
         content = "hello"
-        self.course_wiki_page.edit_article(content)
+        self.course_wiki_page.open_editor()
+        self.course_wiki_page.replace_wiki_content(content)
+        self.course_wiki_page.save_wiki_content()
         actual_content = str(self.course_wiki_page.q(css='.wiki-article p').text[0])
         self.assertEqual(content, actual_content)
 
-    def test_course_circuit_plugin(self):
-        """
-        Wiki page by default is editable for students
-        """
-        hi = "hi"
-        from nose.tools import set_trace
-        set_trace()
-        circuit_plugin_content = u"circuit-schematic:[['r',[128,48,0],{'r':'1','_json_':0},['2','1']],['view',0,0,2,null,null,null,null,null,null,null],['dc',{'0':0,'1':1,'I(_3)':-1}]]"
-        # circuit_plugin_content = """circuit-schematic:[["r",[128,48,0],{"r":"1","_json_":0},["2","1"]],["view",0,0,2,null,null,null,null,null,null,null],["dc",{"0":0,"1":1,"I(_3)":-1}]]"""
-        self.course_wiki_page.edit_article(circuit_plugin_content)
-        # actual_content = str(self.course_wiki_page.q(css='.wiki-article p').text[0])
-        # self.assertEqual(circuit_plugin_content, actual_content)
-        # from nose.tools import set_trace
-        # set_trace()
-        # self.assertEqual(1, 1)
 
 
 class HighLevelTabTest(UniqueCourseTest):

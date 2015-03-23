@@ -19,14 +19,33 @@ class CourseWikiPage(PageObject):
         """
         return self.q(css='.breadcrumb').present
 
-    def edit_article(self, content):
+    def confirm_editor_open(self):
+        """
+        The wiki page editor. Raise an error if it is not open.
+        """
+        return self.q(css='.CodeMirror-scroll').present
+
+    def open_editor(self):
         """
         Replace content of a wiki article with new content
         """
         edit_button = self.q(css='.fa-pencil')
         edit_button.click()
-        self.wait_for_element_presence('.CodeMirror-scroll', 'wait for wiki edit screen')
+        self.wait_for(self.confirm_editor_open, 'Wait for editor to open')
+
+    def replace_wiki_content(self, content):
+        """
+        Editor must be open already. This will replace any content in the editor
+        with new content
+        """
+        self.confirm_editor_open
         type_in_codemirror(self, 0, content)
+
+    def save_wiki_content(self):
+        """
+        When the editor is open, click save
+        """
+        self.confirm_editor_open
         self.q(css='button[name="save"]').click()
         self.wait_for_element_presence('.alert-success', 'wait for the article to be saved')
 
