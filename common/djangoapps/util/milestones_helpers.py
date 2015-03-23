@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey, UsageKey
-from courseware.entrance_exams import can_skip_entrance_exam
 from xmodule.modulestore.django import modulestore
 
 NAMESPACE_CHOICES = {
@@ -181,15 +180,6 @@ def get_required_content(course, user):
             if milestone_path.get('content') and len(milestone_path['content']):
                 for content in milestone_path['content']:
                     required_content.append(content)
-
-    # check if required_content has any entrance exam
-    # and user is allowed to skip it then remove it from required content
-    if required_content and getattr(course, 'entrance_exam_enabled', False) and \
-            can_skip_entrance_exam(user, course):
-        descriptors = [modulestore().get_item(UsageKey.from_string(content)) for content in required_content]
-        entrance_exam_contents = [unicode(descriptor.location)
-                                  for descriptor in descriptors if descriptor.is_entrance_exam]
-        required_content = list(set(required_content) - set(entrance_exam_contents))
     return required_content
 
 

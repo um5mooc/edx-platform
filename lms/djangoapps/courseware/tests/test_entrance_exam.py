@@ -10,10 +10,11 @@ from courseware.module_render import get_module, toc_for_course
 from courseware.tests.factories import UserFactory, InstructorFactory, StaffFactory
 from courseware.tests.helpers import LoginEnrollmentTestCase
 from courseware.entrance_exams import (
-    get_entrance_exam_content_info,
+    course_has_entrance_exam,
+    get_entrance_exam_content,
     get_entrance_exam_score,
-    can_skip_entrance_exam,
-    has_passed_entrance_exam,
+    user_can_skip_entrance_exam,
+    user_has_passed_entrance_exam,
 )
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
@@ -298,14 +299,14 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
             self.assertIn('Exam Problem - Problem 1', resp.content)
             self.assertIn('Exam Problem - Problem 2', resp.content)
 
-    def test_entrance_exam_content_info(self):
+    def test_get_entrance_exam_content(self):
         """
-        test entrance exam content info method
+        test get entrance exam content method
         """
-        exam_chapter, is_exam_passed = get_entrance_exam_content_info(self.request, self.course)
+        exam_chapter = get_entrance_exam_content(self.request, self.course)
         if settings.FEATURES.get('ENTRANCE_EXAMS', False):
             self.assertEqual(exam_chapter.url_name, self.entrance_exam.url_name)
-            self.assertEqual(is_exam_passed, False)
+            self.assertFalse(user_has_passed_entrance_exam(self.request, self.request.user, self.course))
 
             # Pass the entrance exam
             # pylint: disable=maybe-no-member,no-member
@@ -325,9 +326,18 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
             )._xmodule
             module.system.publish(self.problem_1, 'grade', grade_dict)
 
-            exam_chapter, is_exam_passed = get_entrance_exam_content_info(self.request, self.course)
+            # pylint: disable=protected-access
+            module = get_module(
+                self.request.user,
+                self.request,
+                self.problem_2.scope_ids.usage_id,
+                field_data_cache,
+            )._xmodule
+            module.system.publish(self.problem_2, 'grade', grade_dict)
+
+            exam_chapter = get_entrance_exam_content(self.request, self.course)
             self.assertEqual(exam_chapter, None)
-            self.assertEqual(is_exam_passed, True)
+            self.assertTrue(user_has_passed_entrance_exam(self.request, self.request.user, self.course))
 
     @patch.dict('django.conf.settings.FEATURES', {'ENTRANCE_EXAMS': True})
     def test_entrance_exam_score(self):
@@ -339,7 +349,7 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
 
         # Pass the entrance exam
         # pylint: disable=maybe-no-member,no-member
-        grade_dict = {'value': 1, 'max_value': 2, 'user_id': self.request.user.id}
+        grade_dict = {'value': 1, 'max_value': 1, 'user_id': self.request.user.id}
         field_data_cache = FieldDataCache.cache_for_descriptor_descendents(
             self.course.id,
             self.request.user,
@@ -355,9 +365,18 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         )._xmodule
         module.system.publish(self.problem_1, 'grade', grade_dict)
 
+        # pylint: disable=protected-access
+        module = get_module(
+            self.request.user,
+            self.request,
+            self.problem_2.scope_ids.usage_id,
+            field_data_cache,
+        )._xmodule
+        module.system.publish(self.problem_2, 'grade', grade_dict)
+
         exam_score = get_entrance_exam_score(self.request, self.course)
         # 50 percent exam score should be achieved.
-        self.assertEqual(exam_score * 100, 50)
+        self.assertGreater(exam_score * 100, 50)
 
     def test_entrance_exam_requirement_message(self):
         """
@@ -431,13 +450,22 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         )._xmodule
         module.system.publish(self.problem_1, 'grade', grade_dict)
 
+        # pylint: disable=protected-access
+        module = get_module(
+            self.request.user,
+            self.request,
+            self.problem_2.scope_ids.usage_id,
+            field_data_cache,
+        )._xmodule
+        module.system.publish(self.problem_2, 'grade', grade_dict)
+
         resp = self.client.get(url)
         if settings.FEATURES.get('ENTRANCE_EXAMS', False):
             self.assertNotIn('To access course materials, you must score', resp.content)
             self.assertIn('You have passed the entrance exam.', resp.content)
             self.assertIn('Lesson 1', resp.content)
 
-    @patch.dict('django.conf.settings.FEATURES', {'ENTRANCE_EXAMS': True})
+    @patch.dict('django.conf.settings.FEATURES', {'ENTRANCE_EXAMS': True, 'MILESTONES_APP': True})
     def test_entrance_exam_gating(self):
         """
         Unit Test: test_entrance_exam_gating
@@ -550,6 +578,7 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         # Login as member of staff
         self.client.logout()
         staff_user = StaffFactory(course_key=self.course.id)
+        staff_user.is_staff = True
         self.client.login(username=staff_user.username, password='test')
 
         # assert staff has access to all toc
@@ -565,28 +594,24 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
             self.assertIn(toc_section, unlocked_toc)
 
     @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
-    @patch('util.milestones_helpers.get_required_content', Mock(return_value=['a value']))
+    @patch('courseware.entrance_exams.user_has_passed_entrance_exam', Mock(return_value=False))
     def test_courseware_page_access_without_passing_entrance_exam(self):
         """
         Test courseware access page without passing entrance exam
         """
-        # Mocking get_required_content with non empty list to assume user has not passed entrance exam
         url = reverse(
             'courseware_chapter',
             kwargs={'course_id': unicode(self.course.id), 'chapter': self.chapter.url_name}
         )
         response = self.client.get(url)
-        self.assertRedirects(
-            response,
-            reverse(
-                'courseware',
-                args=[unicode(self.course.id)]
-            )
-        )
-        self.assertEqual(response.status_code, 302)
+        redirect_url = reverse('courseware', args=[unicode(self.course.id)])
+        self.assertRedirects(response, redirect_url, status_code=302, target_status_code=302)
+        response = self.client.get(redirect_url)
+        exam_url = response.get('Location')
+        self.assertRedirects(response, exam_url)
 
     @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
-    @patch('util.milestones_helpers.get_required_content', Mock(return_value=[]))
+    @patch('courseware.entrance_exams.user_has_passed_entrance_exam', Mock(return_value=True))
     def test_courseware_page_access_after_passing_entrance_exam(self):
         """
         Test courseware access page after passing entrance exam
@@ -634,11 +659,26 @@ class EntranceExamTestCases(LoginEnrollmentTestCase, ModuleStoreTestCase):
         """
         Test can_skip_entrance_exam method with anonymous user
         """
-        self.assertFalse(can_skip_entrance_exam(self.anonymous_user, self.course))
+        self.assertFalse(user_can_skip_entrance_exam(self.request, self.anonymous_user, self.course))
 
     @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
     def test_has_passed_entrance_exam_with_anonymous_user(self):
         """
         Test has_passed_entrance_exam method with anonymous user
         """
-        self.assertFalse(has_passed_entrance_exam(self.anonymous_user, self.course))
+        self.assertFalse(user_has_passed_entrance_exam(self.request, self.anonymous_user, self.course))
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    def test_course_has_entrance_exam_missing_exam_id(self):
+        course = CourseFactory.create(
+            metadata={
+                'entrance_exam_enabled': True,
+            }
+        )
+        self.assertFalse(course_has_entrance_exam(course))
+
+    @patch.dict("django.conf.settings.FEATURES", {'ENTRANCE_EXAMS': True})
+    def test_user_has_passed_entrance_exam_short_circuit_missing_exam(self):
+        course = CourseFactory.create(
+        )
+        self.assertTrue(user_has_passed_entrance_exam(self.request, self.request.user, course))

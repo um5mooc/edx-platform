@@ -41,8 +41,13 @@ from courseware.courses import (
 from courseware.masquerade import setup_masquerade
 from courseware.model_data import FieldDataCache
 from .module_render import toc_for_course, get_module_for_descriptor, get_module
-from .entrance_exams import get_entrance_exam_content_info, get_entrance_exam_score
-from .entrance_exams import can_view_courseware_with_entrance_exam
+from .entrance_exams import (
+    course_has_entrance_exam,
+    get_entrance_exam_content,
+    get_entrance_exam_score,
+    user_can_access_courseware_with_entrance_exam,
+    user_has_passed_entrance_exam
+)
 from courseware.models import StudentModule, StudentModuleHistory
 from course_modes.models import CourseMode
 
@@ -375,10 +380,10 @@ def _index_bulk_op(request, course_key, chapter, section, position):
     # before accessing any other chapter/section of course
     # Note that if the entrance exam feature flag has been turned off (default)
     # then this check will always pass
-    if chapter and getattr(course, 'entrance_exam_enabled', False):
+    if chapter and course_has_entrance_exam(course):
         chapter_descriptor = course.get_child_by(lambda m: m.location.name == chapter)
         if chapter_descriptor and not getattr(chapter_descriptor, 'is_entrance_exam', False) \
-                and not can_view_courseware_with_entrance_exam(user, course):
+                and not user_can_access_courseware_with_entrance_exam(request, user, course):
             # user is not allowed to view courseware therefore redirect to entrance exam
             log.info(
                 u'User %d tried to view course %s '
@@ -433,9 +438,9 @@ def _index_bulk_op(request, course_key, chapter, section, position):
             return render_to_response('courseware/courseware.html', context)
         elif chapter is None:
             # Check first to see if we should instead redirect the user to an Entrance Exam
-            if settings.FEATURES.get('ENTRANCE_EXAMS', False) and course.entrance_exam_enabled:
-                exam_chapter, __ = get_entrance_exam_content_info(request, course)
-                if exam_chapter is not None:
+            if course_has_entrance_exam(course):
+                exam_chapter = get_entrance_exam_content(request, course)
+                if exam_chapter:
                     exam_section = None
                     if exam_chapter.get_children():
                         exam_section = exam_chapter.get_children()[0]
@@ -475,13 +480,12 @@ def _index_bulk_op(request, course_key, chapter, section, position):
                 return redirect(reverse('courseware', args=[course.id.to_deprecated_string()]))
             raise Http404
 
-        if settings.FEATURES.get('ENTRANCE_EXAMS', False) and course.entrance_exam_enabled:
+        if course_has_entrance_exam(course):
             # Message should not appear outside the context of entrance exam subsection.
             # if section is none then we don't need to show message on welcome back screen also.
             if getattr(chapter_module, 'is_entrance_exam', False) and section is not None:
-                __, is_exam_passed = get_entrance_exam_content_info(request, course)
                 context['entrance_exam_current_score'] = get_entrance_exam_score(request, course)
-                context['entrance_exam_passed'] = is_exam_passed
+                context['entrance_exam_passed'] = user_has_passed_entrance_exam(request, user, course)
 
         if section is not None:
             section_descriptor = chapter_descriptor.get_child_by(lambda m: m.location.name == section)
@@ -693,7 +697,7 @@ def course_info(request, course_id):
         course = get_course_with_access(request.user, 'load', course_key)
 
         # check to see if there is entrance exam not passed then redirect to entrance exam
-        if not can_view_courseware_with_entrance_exam(request.user, course):
+        if not user_can_access_courseware_with_entrance_exam(request, request.user, course):
             return redirect(reverse('courseware', args=[unicode(course.id)]))
 
         # check to see if there is a required survey that must be taken before
