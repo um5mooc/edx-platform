@@ -2,16 +2,16 @@
 Course wiki
 """
 
-from bok_choy.page_object import PageObject
+from .course_page import CoursePage
 from ...pages.studio.utils import type_in_codemirror
 
 
-class CourseWikiPage(PageObject):
+class CourseWikiPage(CoursePage):
     """
     Course wiki navigation and objects.
     """
 
-    url = None
+    url_path = "course_wiki"
 
     def is_browser_on_page(self):
         """

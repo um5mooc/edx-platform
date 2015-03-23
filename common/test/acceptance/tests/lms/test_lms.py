@@ -439,7 +439,7 @@ class CourseWikiTest(UniqueCourseTest):
         self.course_info['number'] = self.unique_id[0:6]
 
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
-        self.course_wiki_page = CourseWikiPage(self.browser)
+        self.course_wiki_page = CourseWikiPage(self.browser, self.course_id)
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
         self.tab_nav = TabNavPage(self.browser)
 
@@ -571,7 +571,7 @@ class HighLevelTabTest(UniqueCourseTest):
         the first time, it is created on the fly.
         """
 
-        course_wiki = CourseWikiPage(self.browser)
+        course_wiki = CourseWikiPage(self.browser, self.course_id)
         # From the course info page, navigate to the wiki tab
         self.course_info_page.visit()
         self.tab_nav.go_to_tab('Wiki')
