@@ -345,7 +345,7 @@
         a, span {
           @extend %t-title3;
           @extend %t-light;
-          display: block;
+          display: inline-block;
           margin-bottom: ($baseline/2);
 
           &:hover, &:focus {
@@ -407,18 +407,17 @@
 
           // STATE: is-disabled
           &.is-disabled {
-            color: #808080;
             color: $gray-l4;
           }
 
           // TYPE: facebook share
           &.action-facebook, {
-            color: #3b5998;
+            color: $facebook-blue;
           }
 
           // TYPE: twitter share
           &.action-twitter {
-            color: #55ACEE;
+            color: $twitter-blue;
           }
         }
 
@@ -529,7 +528,7 @@
         color: $very-light-text;
 
         p {
-          color: #222;
+          color: $gray-d4;
 
           span {
             font-weight: bold;
