@@ -165,11 +165,28 @@ class CapaHtmlRenderTest(unittest.TestCase):
         # Expect that the template renderer was called with the correct
         # arguments, once for the textline input and once for
         # the solution
-        expected_textline_context = {
+        expected_textline_question_context = {
             'STATIC_URL': '/dummy-static/',
             'status': the_system.STATUS_CLASS('unsubmitted'),
             'label': '',
             'value': '',
+            'question_label': 'Test question',
+            'preprocessor': None,
+            'msg': '',
+            'inline': False,
+            'hidden': False,
+            'do_math': False,
+            'id': '1_2_1',
+            'trailing_text': '',
+            'size': None,
+        }
+
+        expected_textline_questionless_context = {
+            'STATIC_URL': '/dummy-static/',
+            'status': the_system.STATUS_CLASS('unsubmitted'),
+            'label': '',
+            'value': '',
+            'question_label': '',
             'preprocessor': None,
             'msg': '',
             'inline': False,
@@ -183,9 +200,9 @@ class CapaHtmlRenderTest(unittest.TestCase):
         expected_solution_context = {'id': '1_solution_1'}
 
         expected_calls = [
-            mock.call('textline.html', expected_textline_context),
+            mock.call('textline.html', expected_textline_question_context),
             mock.call('solutionspan.html', expected_solution_context),
-            mock.call('textline.html', expected_textline_context),
+            mock.call('textline.html', expected_textline_questionless_context),
             mock.call('solutionspan.html', expected_solution_context)
         ]
 

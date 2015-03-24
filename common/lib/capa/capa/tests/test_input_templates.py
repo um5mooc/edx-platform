@@ -127,6 +127,7 @@ class ChoiceGroupTemplateTest(TemplateTestCase):
                         'choices': choices,
                         'status': Status('correct'),
                         'label': 'test',
+                        'question_label': 'test',
                         'input_type': 'checkbox',
                         'name_array_suffix': '1',
                         'value': '3'}
@@ -351,6 +352,7 @@ class TextlineTemplateTest(TemplateTestCase):
         self.context = {'id': '1',
                         'status': Status('correct'),
                         'label': 'test',
+                        'question_label': 'test',
                         'value': '3',
                         'preprocessor': None,
                         'trailing_text': None}
@@ -479,6 +481,7 @@ class FormulaEquationInputTemplateTest(TemplateTestCase):
             'value': 'PREFILLED_VALUE',
             'status': Status('unsubmitted'),
             'label': 'test',
+            'question_label': 'test',
             'previewer': 'file.js',
             'reported_status': 'REPORTED_STATUS',
         }
@@ -676,6 +679,7 @@ class OptionInputTemplateTest(TemplateTestCase):
             'options': [],
             'status': Status('unsubmitted'),
             'label': 'test',
+            'question_label': 'test',
             'value': 0
         }
         super(OptionInputTemplateTest, self).setUp()
