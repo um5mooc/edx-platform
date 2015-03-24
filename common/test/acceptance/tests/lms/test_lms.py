@@ -33,7 +33,7 @@ from ...pages.studio.settings import SettingsPage
 from ...pages.lms.login_and_register import CombinedLoginAndRegisterPage
 from ...pages.lms.track_selection import TrackSelectionPage
 from ...pages.lms.pay_and_verify import PaymentAndVerificationFlow, FakePaymentPage
-from ...pages.lms.wiki import CourseWikiPage
+from ...pages.lms.course_wiki import CourseWikiPage, CourseWikiEditPage
 from ...fixtures.course import CourseFixture, XBlockFixtureDesc, CourseUpdateDesc
 
 
@@ -441,6 +441,7 @@ class CourseWikiTest(UniqueCourseTest):
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
         self.course_wiki_page = CourseWikiPage(self.browser, self.course_id)
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
+        self.course_wiki_edit_page = CourseWikiEditPage(self.browser)
         self.tab_nav = TabNavPage(self.browser)
 
         CourseFixture(
@@ -466,8 +467,8 @@ class CourseWikiTest(UniqueCourseTest):
         """
         content = "hello"
         self.course_wiki_page.open_editor()
-        self.course_wiki_page.replace_wiki_content(content)
-        self.course_wiki_page.save_wiki_content()
+        self.course_wiki_edit_page.replace_wiki_content(content)
+        self.course_wiki_edit_page.save_wiki_content()
         actual_content = str(self.course_wiki_page.q(css='.wiki-article p').text[0])
         self.assertEqual(content, actual_content)
 
