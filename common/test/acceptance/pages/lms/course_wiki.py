@@ -53,13 +53,13 @@ class CourseWikiEditPage(CoursePage):
             course_number=self.course_info['number'],
             course_run=self.course_info['run']
         )
+
     @property
     def url(self):
         """
         Construct a URL to the page within the course.
         """
         return BASE_URL + "/courses/" + self.article_name + "/_edit"
-
 
     def is_browser_on_page(self):
         """
