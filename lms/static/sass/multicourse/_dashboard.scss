@@ -336,7 +336,6 @@
         @include float(left);
         width: flex-grid(9);
         padding: 0;
-        height: 120px;
       }
 
       .course-title {
@@ -436,7 +435,7 @@
             top: ($baseline*2);
             right: 19px;
             pointer-events: none;
-            min-width: ($baseline*8);
+            min-width: ($baseline*7);
 
             &.is-visible {
               display: block;
@@ -453,7 +452,7 @@
               border-radius: 3px;
               margin: ($baseline/4) 0 0 0;
               border: 1px solid $gray-l3;
-              padding: ($baseline/2) ($baseline*0.75);
+              padding: 0 ($baseline/2);
               background: $white;
 
               // ui triangle/nub
