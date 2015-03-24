@@ -441,7 +441,7 @@ class CourseWikiTest(UniqueCourseTest):
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
         self.course_wiki_page = CourseWikiPage(self.browser, self.course_id)
         self.course_info_page = CourseInfoPage(self.browser, self.course_id)
-        self.course_wiki_edit_page = CourseWikiEditPage(self.browser)
+        self.course_wiki_edit_page = CourseWikiEditPage(self.browser, self.course_id, self.course_info)
         self.tab_nav = TabNavPage(self.browser)
 
         CourseFixture(

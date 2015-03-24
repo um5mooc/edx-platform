@@ -2,7 +2,7 @@
 Course wiki
 """
 
-from bok_choy.page_object import PageObject
+from . import BASE_URL
 from .course_page import CoursePage
 from ...pages.studio.utils import type_in_codemirror
 
@@ -35,11 +35,31 @@ class CourseWikiPage(CoursePage):
         return str(self.q(css='.main-article h1').text[0])
 
 
-class CourseWikiEditPage(PageObject):
+class CourseWikiEditPage(CoursePage):
     """
     Editor page
     """
-    url = "_edit"
+
+    def __init__(self, browser, course_id, course_info):
+        """
+        Course ID is currently of the form "edx/999/2013_Spring"
+        but this format could change.
+        """
+        super(CourseWikiEditPage, self).__init__(browser, course_id)
+        self.course_id = course_id
+        self.course_info = course_info
+        self.article_name = "course-v1:{org}+{course_number}+{course_run}".format(
+            org=self.course_info['org'],
+            course_number=self.course_info['number'],
+            course_run=self.course_info['run']
+        )
+    @property
+    def url(self):
+        """
+        Construct a URL to the page within the course.
+        """
+        return BASE_URL + "/courses/" + self.article_name + "/_edit"
+
 
     def is_browser_on_page(self):
         """
