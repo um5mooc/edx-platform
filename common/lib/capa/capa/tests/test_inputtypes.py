@@ -122,6 +122,7 @@ class ChoiceGroupTest(unittest.TestCase):
             'value': 'foil3',
             'status': inputtypes.Status('answered'),
             'label': '',
+            'question_label': '',
             'msg': '',
             'input_type': expected_input_type,
             'choices': [('foil1', '<text>This is foil One.</text>'),
@@ -375,6 +376,7 @@ class CodeInputTest(unittest.TestCase):
             'value': 'print "good evening"',
             'status': inputtypes.Status('queued'),
             # 'label': '',
+            'question_label': '',
             'msg': the_input.submitted_msg,
             'mode': mode,
             'linenumbers': linenumbers,
@@ -648,7 +650,7 @@ class MatlabTest(unittest.TestCase):
         output = self.the_input.get_html()
         self.assertEqual(
             etree.tostring(output),
-            """<div>{\'status\': Status(\'queued\'), \'button_enabled\': True, \'rows\': \'10\', \'queue_len\': \'3\', \'mode\': \'\', \'cols\': \'80\', \'STATIC_URL\': \'/dummy-static/\', \'linenumbers\': \'true\', \'queue_msg\': \'\', \'value\': \'print "good evening"\', \'msg\': u\'Submitted. As soon as a response is returned, this message will be replaced by that feedback.\', \'matlab_editor_js\': \'/dummy-static/js/vendor/CodeMirror/octave.js\', \'hidden\': \'\', \'id\': \'prob_1_2\', \'tabsize\': 4}</div>"""
+            """<div>{\'status\': Status(\'queued\'), \'button_enabled\': True, \'rows\': \'10\', \'queue_len\': \'3\',\'question_label\': \'\', \'mode\': \'\', \'cols\': \'80\', \'STATIC_URL\': \'/dummy-static/\', \'linenumbers\': \'true\', \'queue_msg\': \'\', \'value\': \'print "good evening"\', \'msg\': u\'Submitted. As soon as a response is returned, this message will be replaced by that feedback.\', \'matlab_editor_js\': \'/dummy-static/js/vendor/CodeMirror/octave.js\', \'hidden\': \'\', \'id\': \'prob_1_2\', \'tabsize\': 4}</div>"""
         )
 
         # test html, that is correct HTML5 html, but is not parsable by XML parser.
@@ -948,6 +950,7 @@ class CrystallographyTest(unittest.TestCase):
             'value': value,
             'status': inputtypes.Status('unsubmitted'),
             # 'label': '',
+            'question_label': '',
             'msg': '',
             'width': width,
             'height': height,
@@ -1023,6 +1026,7 @@ class ChemicalEquationTest(unittest.TestCase):
             'value': 'H2OYeah',
             'status': inputtypes.Status('unanswered'),
             'label': '',
+            'question_label': '',
             'msg': '',
             'size': self.size,
             'previewer': '/dummy-static/js/capa/chemical_equation_preview.js',
@@ -1241,6 +1245,7 @@ class DragAndDropTest(unittest.TestCase):
             'value': value,
             'status': inputtypes.Status('unsubmitted'),
             # 'label': '',
+            'question_label': '',
             'msg': '',
             'drag_and_drop_json': json.dumps(user_input)
         }
@@ -1306,6 +1311,7 @@ class AnnotationInputTest(unittest.TestCase):
             ],
             'value': json_value,
             'options_value': value['options'],
+            'question_label': '',
             'has_options_value': len(value['options']) > 0,
             'comment_value': value['comment'],
             'debug': False,
