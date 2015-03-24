@@ -12,7 +12,7 @@ class CourseWikiPage(CoursePage):
     Course wiki navigation and objects.
     """
 
-    url_path = "course_wiki"
+    url_path = "wiki"
 
     def is_browser_on_page(self):
         """
@@ -39,7 +39,7 @@ class CourseWikiEditPage(PageObject):
     """
     Editor page
     """
-    url = None
+    url = "_edit"
 
     def is_browser_on_page(self):
         """
